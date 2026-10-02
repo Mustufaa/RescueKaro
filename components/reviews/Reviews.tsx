@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useState } from "react";
@@ -30,7 +30,7 @@ export function Reviews() {
           {visible.map((review) => (
             <article className="surface min-w-[calc(100%-1.5rem)] snap-center p-5 sm:min-w-[75%] sm:p-7 md:min-w-0" key={review.id}>
               <div className="flex flex-wrap items-center justify-between gap-3"><RatingDisplay rating={review.rating} /><span className="text-[9px] font-black uppercase tracking-[.12em] text-rescue sm:tracking-[.16em]">Sample / placeholder</span></div>
-              <blockquote className="mt-8 break-words text-lg font-semibold leading-8">“{review.review}”</blockquote>
+              <blockquote className="mt-8 break-words text-lg font-semibold leading-8">&quot;{review.review}&quot;</blockquote>
               <div className="mt-8 flex min-w-0 flex-wrap items-center gap-3">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-navy text-xs font-black text-white">{review.avatar}</span>
                 <span className="min-w-0 flex-1"><b className="block break-words text-sm">{review.customerName}</b><small className="block break-words text-muted">{review.location}</small></span>

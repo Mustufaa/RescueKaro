@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Instagram, Linkedin, Mail, MapPin, Phone, Youtube } from "lucide-react";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 
@@ -82,7 +82,7 @@ export function Footer() {
       </div>
 
       <div className="container-page flex flex-col gap-2 py-7 text-xs text-white/45 sm:flex-row sm:justify-between">
-        <span>© RescueKaro. All rights reserved.</span>
+        <span>(c) RescueKaro. All rights reserved.</span>
         <span>Scan Karo. Safe Karo.</span>
       </div>
     </footer>

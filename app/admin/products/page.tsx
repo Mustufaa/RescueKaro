@@ -1,2 +1,2 @@
-import { AdminListPage } from "@/components/admin/AdminListPage";
-export default function Page(){return <AdminListPage eyebrow="Catalogue" title="Products" empty="No products configured" rows={[{Product:"RescueKaro Starter Kit",Price:"₹99 + shipping",Contents:"2 stickers · 2 covers",Status:"Active"},{Product:"Replacement sticker",Price:"₹50 target",Contents:"1 sticker · 1 cover",Status:"Configurable"}]}/>}
+﻿import { AdminListPage } from "@/components/admin/AdminListPage";
+export default function Page(){return <AdminListPage eyebrow="Catalogue" title="Products" empty="No products configured" rows={[{Product:"RescueKaro Starter Kit",Price:"Rs 99 + shipping",Contents:"2 stickers - 2 covers",Status:"Active"},{Product:"Replacement sticker",Price:"Rs 50 target",Contents:"1 sticker - 1 cover",Status:"Configurable"}]}/>}

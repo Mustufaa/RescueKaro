@@ -1,7 +1,7 @@
-export const siteConfig = {
+﻿export const siteConfig = {
   name: "RescueKaro",
   tagline: "Scan Karo. Safe Karo.",
-  description: "Protected emergency QR stickers that keep important information one scan away—even without an app or internet.",
+  description: "Protected emergency QR stickers that keep important information one scan away - even without an app or internet.",
   price: 99,
   replacementPrice: 50,
   supportEmail: "team@rescuekaro.com",
