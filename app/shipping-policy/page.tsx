@@ -1,0 +1,2 @@
+import { PolicyPage } from "@/components/legal/PolicyPage";
+export default function Page(){return <PolicyPage title="Shipping Policy" intro="How physical RescueKaro orders will be prepared and delivered." sections={[["Processing","Orders move through QR verification, printing, packing, and shipping. Estimated windows will be shown at checkout when fulfilment configuration is final."],["Tracking","A tracking reference will appear in the customer dashboard after shipment."],["Delivery issues","Use Order Support with your order ID for address or delivery assistance."]]}/>}

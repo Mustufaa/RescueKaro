@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}){return <main className="grid min-h-dvh place-items-center p-6"><div className="surface max-w-lg p-9 text-center"><h1 className="text-3xl font-black">Something didn’t load.</h1><p className="mt-3 text-muted">Please retry. If the issue continues, the future support service will capture it.</p><button onClick={reset} className="button button-primary mt-7">Try again</button></div></main>}

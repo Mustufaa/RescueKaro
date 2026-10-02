@@ -1,0 +1,1 @@
+export const mockShippingService={async calculate(pinCode:string){await new Promise(r=>setTimeout(r,600));if(!/^\d{6}$/.test(pinCode))return {available:false,charge:0,error:"Enter a valid 6-digit PIN code."};const charge=Number(pinCode.at(-1))%2===0?49:59;return {available:true,charge};}};
