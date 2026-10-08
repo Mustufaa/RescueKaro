@@ -47,20 +47,20 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-20 border-b border-line bg-surface">
-          <div className="flex min-h-20 items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-9">
+        <header className="sticky top-0 z-20 border-b border-line bg-surface safe-top">
+          <div className="flex min-h-20 items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-9 safe-px">
             <div className="min-w-0">
               <small className="text-muted">RescueKaro Operations</small>
               <b className="block text-sm">Admin access - Demo state</b>
             </div>
             <span className="shrink-0 rounded-full bg-red-950 px-3 py-2 text-[10px] font-black uppercase text-red-300 sm:px-4">Frontend only</span>
           </div>
-          <nav className="flex gap-2 overflow-x-auto border-t border-line px-4 py-3 hide-scroll lg:hidden" aria-label="Admin navigation">
+          <nav className="flex gap-2 overflow-x-auto border-t border-line px-4 py-2.5 hide-scroll lg:hidden safe-px" aria-label="Admin navigation">
             {links.map(([I, l, h]) => (
               <Link
                 key={h}
                 className={cn(
-                  "flex min-w-max items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs font-black text-muted",
+                  "flex min-h-[44px] min-w-max items-center gap-2 rounded-lg border border-line px-3.5 py-2.5 text-xs font-black text-muted touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-safety",
                   path === h || (h !== "/admin" && path.startsWith(h)) ? "border-safety bg-[#0b315d] text-safety" : "bg-canvas",
                 )}
                 href={h}
@@ -71,7 +71,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
         </header>
-        <main className="min-w-0 p-4 sm:p-6 lg:p-9">{children}</main>
+        <main className="min-w-0 p-4 sm:p-6 lg:p-9 safe-px safe-bottom">{children}</main>
       </div>
     </div>
   );

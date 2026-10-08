@@ -1,8 +1,99 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, HeartHandshake, ScanLine, ShieldCheck } from "lucide-react";
 import { PublicShell } from "@/components/layout/PublicShell";
 import { images } from "@/config/images";
-export const metadata:Metadata={title:"About",description:"Why RescueKaro exists and how a simple protected QR can help people prepare for unexpected moments."};
-export default function About(){return <PublicShell><section className="relative min-h-[560px] sm:min-h-[620px] overflow-hidden bg-navy text-white"><Image src={images.lifestyle} alt="RescueKaro rider on an everyday journey" fill priority className="object-cover object-right opacity-55"/><div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-transparent"/><div className="container-page relative z-10 flex min-h-[560px] items-center py-16 sm:min-h-[620px] sm:py-0"><div className="max-w-2xl"><span className="eyebrow !text-blue-300">Our story</span><h1 className="display mt-5 text-4xl sm:text-6xl lg:text-8xl">Safety should still work when technology does not.</h1><p className="mt-7 max-w-xl text-lg leading-8 text-white/70">RescueKaro began with one practical question: if you could not speak for yourself, how would a stranger know who to call?</p></div></div></section><section className="section"><div className="container-page grid gap-14 lg:grid-cols-2"><div><span className="eyebrow">The problem</span><h2 className="display mt-4 text-4xl sm:text-5xl">Important details are often somewhere else.</h2></div><div className="space-y-6 text-lg leading-8 text-muted"><p>Phones may be locked. Networks may be unreliable. A helper may not know your name, blood group, or family contact.</p><p>We wanted the essential information to travel with the gear people already carry - without adding another app or complicated routine.</p></div></div></section><section className="section bg-surface"><div className="container-page grid gap-5 md:grid-cols-3">{[[ScanLine,"Direct","Information lives in the static QR itself."],[ShieldCheck,"Protected","A physical cover reduces casual exposure."],[HeartHandshake,"Human","Clear enough for a stranger to understand quickly."]].map(([I,t,d])=>{const Icon=I as typeof ScanLine;return <article className="border-t-4 border-safety bg-canvas p-8" key={String(t)}><Icon className="text-rescue"/><h3 className="mt-8 text-2xl font-black">{String(t)}</h3><p className="mt-3 leading-7 text-muted">{String(d)}</p></article>})}</div></section><section id="mission" className="section bg-[#07182d] text-white"><div className="container-page max-w-4xl text-center"><span className="eyebrow !text-blue-300">Our mission</span><h2 className="display mt-5 text-4xl sm:text-6xl lg:text-7xl">Make everyday preparedness feel simple, physical, and possible.</h2><p className="mx-auto mt-7 max-w-2xl leading-8 text-white/65">Our product philosophy is to store only what helps, explain privacy honestly, and make the emergency action obvious: notice, pull, scan, help.</p><Link href="/order" className="button button-primary mt-9">Get RescueKaro <ArrowRight size={17}/></Link></div></section></PublicShell>}
+
+export const metadata: Metadata = {
+  title: "About",
+  description: "Why RescueKaro exists and how a simple protected QR can help people prepare for unexpected moments.",
+};
+
+export default function About() {
+  return (
+    <PublicShell>
+      <section className="relative min-h-[480px] sm:min-h-[560px] md:min-h-[620px] overflow-hidden bg-navy text-white">
+        <Image
+          src={images.lifestyle}
+          alt="RescueKaro rider on an everyday journey"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-right opacity-45"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-transparent" />
+        <div className="container-page relative z-10 flex min-h-[480px] sm:min-h-[560px] md:min-h-[620px] items-center py-12 sm:py-16 md:py-0">
+          <div className="max-w-2xl">
+            <span className="eyebrow !text-blue-300">Our story</span>
+            <h1 className="display mt-4 text-3xl sm:text-5xl lg:text-7xl">
+              Safety should still work when technology does not.
+            </h1>
+            <p className="mt-5 max-w-xl text-base sm:text-lg leading-7 sm:leading-8 text-white/80">
+              RescueKaro began with one practical question: if you could not speak for yourself, how would a stranger know who to call?
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container-page grid gap-10 lg:grid-cols-2 lg:gap-14">
+          <div>
+            <span className="eyebrow">The problem</span>
+            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">
+              Important details are often somewhere else.
+            </h2>
+          </div>
+          <div className="space-y-4 text-base sm:text-lg leading-7 sm:leading-8 text-muted">
+            <p>
+              Phones may be locked. Networks may be unreliable. A helper may not know your name, blood group, or family contact.
+            </p>
+            <p>
+              We wanted the essential information to travel with the gear people already carry—without adding another app or complicated routine.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section bg-surface">
+        <div className="container-page grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+          {[
+            [ScanLine, "Direct", "Information lives in the static QR itself."],
+            [ShieldCheck, "Protected", "A physical cover reduces casual exposure."],
+            [HeartHandshake, "Human", "Clear enough for a stranger to understand quickly."],
+          ].map(([I, t, d]) => {
+            const Icon = I as typeof ScanLine;
+            return (
+              <article className="border-t-4 border-safety bg-canvas p-6 sm:p-8" key={String(t)}>
+                <Icon className="text-rescue" size={28} />
+                <h3 className="mt-6 text-xl sm:text-2xl font-black">{String(t)}</h3>
+                <p className="mt-2 text-sm leading-6 sm:leading-7 text-muted">{String(d)}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section id="mission" className="section bg-[#07182d] text-white">
+        <div className="container-page max-w-4xl text-center">
+          <span className="eyebrow !text-blue-300 mx-auto justify-center">Our mission</span>
+          <h2 className="display mt-4 text-3xl sm:text-5xl lg:text-7xl">
+            Make everyday preparedness feel simple, physical, and possible.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-sm sm:text-base leading-7 text-white/75">
+            Our product philosophy is to store only what helps, explain privacy honestly, and make the emergency action obvious: notice, pull, scan, help.
+          </p>
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/order"
+              className="button button-primary min-h-[44px] touch-manipulation"
+            >
+              <span>Get RescueKaro</span>
+              <ArrowRight size={17} />
+            </Link>
+          </div>
+        </div>
+      </section>
+    </PublicShell>
+  );
+}
