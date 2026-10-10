@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "vercel-build": "npm --prefix frontend run build",
     "frontend:dev": "npm --prefix frontend run dev",
     "frontend:lint": "npm --prefix frontend run lint",
     "frontend:typecheck": "npm --prefix frontend run typecheck",

@@ -156,5 +156,8 @@ The unpredictable token remains required to open the public emergency profile.
 
 ## Deployment note
 
-After this move, configure Vercel with **Root Directory** set to `frontend`.
-No hosting or deployment setting is changed by this repository work.
+The root `vercel.json` installs and builds the Next.js app in `frontend/` for
+Vercel projects whose Root Directory is still the repository root. If the
+project Root Directory is set to `frontend`, Vercel uses that app directly.
+Set `API_INTERNAL_BASE_URL` to the deployed backend's HTTPS URL ending in
+`/api/v1` so the frontend API rewrite can reach it at runtime.
