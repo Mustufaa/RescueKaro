@@ -1,0 +1,14 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+app:
+  otp:
+    development-code: ""

@@ -1,0 +1,5 @@
+"use client";
+import {useEffect,useState} from "react";
+import {authService} from "@/services/auth.service";
+type User={fullName:string;email:string;phone:string};
+export default function Page(){const[user,setUser]=useState<User>();const[error,setError]=useState("");useEffect(()=>{authService.session().then(x=>setUser(x.user)).catch(e=>setError(e instanceof Error?e.message:"Could not load account."))},[]);return <div className="mx-auto max-w-4xl space-y-6"><span className="eyebrow">Account</span><h1 className="display text-3xl text-white">Settings</h1><section className="glass-panel p-6"><h2 className="text-xl font-bold text-white">Profile information</h2>{error?<p role="alert" className="mt-3 text-rescue">{error}</p>:user?<dl className="mt-4 grid gap-3 text-sm"><div><dt className="text-slate-400">Full name</dt><dd className="text-white">{user.fullName}</dd></div><div><dt className="text-slate-400">Email</dt><dd className="text-white">{user.email}</dd></div><div><dt className="text-slate-400">Phone</dt><dd className="text-white">{user.phone}</dd></div></dl>:<p className="mt-3 text-slate-400">Loading account...</p>}</section></div>}

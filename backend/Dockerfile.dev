@@ -1,0 +1,20 @@
+FROM maven:3.9.11-eclipse-temurin-21
+
+WORKDIR /workspace
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN sh ./mvnw -B -DskipTests dependency:go-offline
+
+COPY src/ src/
+RUN sh ./mvnw -B -DskipTests compile
+
+COPY docker-dev.sh /usr/local/bin/rescuekaro-backend-dev
+RUN chmod +x /usr/local/bin/rescuekaro-backend-dev
+
+EXPOSE 8080
+CMD ["/usr/local/bin/rescuekaro-backend-dev"]

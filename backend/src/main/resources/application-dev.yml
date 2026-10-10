@@ -1,0 +1,15 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: false
+
+management:
+  health:
+    mail:
+      enabled: false
+
+logging:
+  level:
+    com.rescuekaro.backend: INFO

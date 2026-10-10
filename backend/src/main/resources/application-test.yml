@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+app:
+  public-app-url: https://test.rescuekaro.example
+  otp:
+    provider: development
+    development-code: "000111"
