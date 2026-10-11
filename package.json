@@ -10,5 +10,9 @@
     "frontend:build": "npm --prefix frontend run build",
     "backend:dev": "backend\\run-dev.cmd",
     "backend:test": "cd backend && mvnw.cmd test"
+  },
+  "dependencies": {
+    "@neon/config": "^1.8.6",
+    "@neon/env": "^1.5.3"
   }
 }

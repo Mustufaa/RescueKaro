@@ -25,3 +25,4 @@ Thumbs.db
 # Logs and local build metadata
 *.log
 *.tsbuildinfo
+.neon
