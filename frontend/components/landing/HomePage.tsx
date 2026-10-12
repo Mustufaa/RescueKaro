@@ -9,7 +9,6 @@ import {
   ScanLine,
   ShieldAlert,
   ShieldCheck,
-  SignalZero,
   Sparkles,
   WifiOff,
   Zap,
@@ -23,8 +22,8 @@ import { FAQ } from "./FAQ";
 
 const ButtonPair = () => (
   <div className="mt-8 flex flex-wrap items-center gap-3.5">
-    <Link href="/order" className="button button-primary">
-      <span>Get Your QR Sticker</span>
+    <Link href="/register" className="button button-primary">
+      <span>Get Started</span>
       <ArrowRight size={17} />
     </Link>
     <Link href="#how-it-works" className="button button-secondary">
@@ -47,7 +46,7 @@ const HeroQRCard = () => (
           TACTILE PULL-COVER
         </span>
         <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">
-          OFFLINE STATIC QR
+          PRIVATE TOKEN QR
         </span>
       </div>
 
@@ -67,7 +66,7 @@ const HeroQRCard = () => (
         <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[10px] font-bold text-white sm:text-[11px]">
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-950/70 px-2 py-1 backdrop-blur-md">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-            100% Offline
+            Online profile
           </span>
           <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-950/70 px-2 py-1 text-slate-300 backdrop-blur-md">
             <ScanLine size={12} className="text-safety" /> Any Phone Camera
@@ -94,7 +93,7 @@ const HeroQRCard = () => (
     </div>
     <div className="pointer-events-none absolute -top-3 -right-3 hidden rounded-xl border border-white/15 bg-[#081729]/95 px-3.5 py-2 text-xs font-bold text-white shadow-xl backdrop-blur-md lg:flex lg:items-center lg:gap-2">
       <Zap size={14} className="text-amber-400" />
-      Instant Offline Decode
+      Scan to view details
     </div>
   </div>
 );
@@ -119,7 +118,7 @@ export function HomePage() {
                 <div className="mb-6 flex flex-wrap items-center gap-2.5">
                   <span className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-red-400 backdrop-blur-md sm:text-[11px]">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-rescue" />
-                    EMERGENCY ID • 100% OFFLINE
+                    EMERGENCY ID • ONLINE PROFILE
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold text-slate-300 backdrop-blur-md">
                     Scan karo safe karo
@@ -134,7 +133,7 @@ export function HomePage() {
                 </h1>
 
                 <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                  A physical emergency QR sticker engineered for helmets, vehicles, and daily gear. Concealed under a tactile pull cover until help is needed—no app, login, or internet required to read.
+                  A physical emergency QR sticker engineered for helmets, vehicles, and daily gear. Concealed under a tactile pull cover until help is needed. Scan with internet access to view approved details—no app or login required.
                 </p>
 
                 <ButtonPair />
@@ -148,7 +147,7 @@ export function HomePage() {
                 <div className="mt-8 grid grid-cols-2 gap-3 border-t border-white/10 pt-6 sm:flex sm:flex-wrap sm:gap-6">
                   {[
                     "Zero Apps Needed",
-                    "Works 100% Offline",
+                    "Approved Details Online",
                     "Scans on Any Phone",
                     "Weather & Rain Proof",
                   ].map((highlight) => (
@@ -172,7 +171,7 @@ export function HomePage() {
         <section className="border-y border-white/10 bg-[#081424]">
           <div className="container-page grid grid-cols-2 gap-6 py-8 sm:grid-cols-4 sm:gap-8">
             {[
-              { stat: "100%", label: "Offline Storage", sub: "Decodes with 0 cell bars" },
+              { stat: "Online", label: "Live Profile", sub: "Updates without reprinting" },
               { stat: "< 1 Sec", label: "Instant Scan", sub: "Standard phone camera" },
               { stat: "IP67", label: "Weatherproof", sub: "UV, rain & scratch proof" },
               { stat: "2×", label: "Dual Kit", sub: "2 stickers + 2 pull masks" },
@@ -193,7 +192,7 @@ export function HomePage() {
           <div className="container-page flex gap-8 overflow-x-auto hide-scroll sm:justify-between">
             {[
               [WifiOff, "No app required"],
-              [SignalZero, "Works 100% offline"],
+              [ScanLine, "Live online profile"],
               [ScanLine, "Camera instant decode"],
               [ShieldCheck, "Physical privacy mask"],
               [Zap, "Direct responder contacts"],
@@ -225,7 +224,7 @@ export function HomePage() {
                 </span>
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-300">
-                RescueKaro operates 100% offline without apps, passwords, or server downtime. Notice, pull, scan, help.
+                RescueKaro opens an approved emergency profile online without requiring an app or login. Notice, pull, scan, help.
               </p>
             </div>
 
@@ -311,7 +310,7 @@ export function HomePage() {
                   </div>
                   <div className="mt-5 border-t border-white/5 pt-3">
                     <span className="text-[11px] font-bold text-slate-400">
-                      Direct phone dial • 100% offline payload
+                      Direct phone dial • online profile
                     </span>
                   </div>
                 </div>
@@ -375,7 +374,7 @@ export function HomePage() {
                 </div>
                 <div className="p-6 pt-0">
                   <Link href="/order?useCase=Helmet" className="button button-primary w-full">
-                    <span>Configure Helmet Kit</span>
+                    <span>Create Digital QR</span>
                     <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -416,7 +415,7 @@ export function HomePage() {
                 </div>
                 <div className="p-6 pt-0">
                   <Link href="/order?useCase=Car" className="button button-primary w-full">
-                    <span>Configure Car Kit</span>
+                    <span>Create Digital QR</span>
                     <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -457,7 +456,7 @@ export function HomePage() {
                 </div>
                 <div className="p-6 pt-0">
                   <Link href="/order?useCase=ID%20%2F%20Personal" className="button button-primary w-full">
-                    <span>Configure Compact Kit</span>
+                    <span>Create Digital QR</span>
                     <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -547,7 +546,7 @@ export function HomePage() {
                 <div className="p-6 sm:p-7">
                   <h3 className="text-xl font-black text-white sm:text-2xl">Bags & Everyday Carry</h3>
                   <p className="mt-2 text-xs leading-6 text-slate-300 sm:text-sm">
-                    Affixed to rigid luggage tags on travel backpacks and commute bags, giving solo commuters and travelers essential offline emergency coverage.
+                    Affixed to rigid luggage tags on travel backpacks and commute bags, giving solo commuters and travelers access to their online emergency profile.
                   </p>
                   <Link href="/order?useCase=Bag" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-safety transition hover:underline">
                     Explore bag placement <ArrowRight size={13} />
@@ -623,24 +622,24 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* OFFLINE BY DESIGN ARCHITECTURE */}
+        {/* ONLINE EMERGENCY PROFILE */}
         <section className="section bg-[#050d1a]">
           <div className="container-page grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
               <span className="eyebrow !text-blue-300">
                 <WifiOff size={13} className="text-safety" />
-                Zero Infrastructure Dependency
+                Live Emergency Profile
               </span>
               <h2 className="display mt-4 text-3xl sm:text-5xl lg:text-6xl">
-                No signal?<br />
-                RescueKaro still works.
+                Scan the sticker.<br />
+                See approved details online.
               </h2>
               <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
-                Unlike smart wristbands or app-based profiles that fail when mobile data drops, RescueKaro writes your emergency profile directly into the QR code matrix. The scanner&apos;s phone decodes it instantly without reaching any server.
+                The QR stores a private link, while your approved emergency details stay in the database. A phone with internet access opens the public profile without an app or login, and your updates appear without reprinting the sticker.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-2.5">
-                {["No App to Install", "No Login Needed", "No Server Lookup", "No Battery"].map((chip) => (
+                {["No App to Install", "No Login Needed", "Internet Required", "No Battery"].map((chip) => (
                   <span className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200" key={chip}>
                     <CircleOff size={14} className="text-rescue" />
                     {chip}
@@ -653,21 +652,21 @@ export function HomePage() {
             <div className="space-y-4">
               <div className="glass-card border-red-500/20 bg-red-950/20 p-5">
                 <div className="flex items-center justify-between text-xs font-bold text-red-400">
-                  <span>❌ Traditional Emergency Apps</span>
-                  <span>Fails in remote areas</span>
+                  <span>Without internet access</span>
+                  <span>Online page unavailable</span>
                 </div>
                 <p className="mt-2 text-xs text-slate-300">
-                  Requires unlocking phone, cellular data, server uptime, and helper having compatible app or account.
+                  The public emergency page needs a network connection and available RescueKaro services. Call local emergency services directly if the page cannot load.
                 </p>
               </div>
 
               <div className="glass-card border-emerald-500/40 bg-emerald-950/20 p-5 ring-1 ring-emerald-500/30">
                 <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
-                  <span>✅ RescueKaro Offline QR</span>
-                  <span>100% Reliable Anywhere</span>
+                  <span>✅ RescueKaro QR Link</span>
+                  <span>Updatable profile</span>
                 </div>
                 <p className="mt-2 text-xs text-slate-200">
-                  Standard camera scans the plain-text payload directly from the physical sticker. Zero network latency, zero dependencies.
+                  A standard camera opens the QR link. The online profile shows only approved emergency details and can be updated without changing the token.
                 </p>
               </div>
             </div>
@@ -693,7 +692,7 @@ export function HomePage() {
                   "All-Weather UV Vinyl",
                   "1× Surface Alcohol Primer",
                   "Direct Helpline Coding (112)",
-                  "Express Pan-India Delivery",
+                  "Physical kits currently unavailable",
                 ].map((item) => (
                   <div className="glass-card flex items-center gap-3 p-4" key={item}>
                     <CheckCircle2 size={18} className="text-safety shrink-0" />
@@ -715,13 +714,13 @@ export function HomePage() {
 
               <div className="my-8 rounded-2xl border border-white/10 bg-white/5 p-6">
                 <span className="block text-2xl font-black text-white sm:text-3xl">2 Stickers + 2 Covers</span>
-                <span className="mt-1 block text-xs font-semibold text-safety">100% Offline • Zero Subscription</span>
+                <span className="mt-1 block text-xs font-semibold text-safety">Online Profile • No App Needed</span>
               </div>
 
               <Link href="/order" className="button button-primary w-full">
-                Order Your Kit Now
+                Create a Free Digital QR
               </Link>
-              <p className="mt-3 text-xs text-slate-400">Pan-India express dispatch • 100% money-back guarantee</p>
+              <p className="mt-3 text-xs text-slate-400">Physical sticker ordering and payment are currently unavailable. Digital QR creation is free.</p>
             </div>
           </div>
         </section>
@@ -742,14 +741,14 @@ export function HomePage() {
                   Scan karo safe karo
                 </span>
                 <h2 className="display mt-4 text-3xl sm:text-5xl lg:text-6xl">
-                  Get your RescueKaro stickers.
+                  Create your RescueKaro digital QR.
                 </h2>
                 <p className="mt-5 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">
-                  Take two minutes today to configure your emergency QR. It could make the vital difference tomorrow. Complete offline peace of mind for you, your vehicle, and your loved ones.
+                  Take two minutes today to configure your emergency QR. It could make the vital difference tomorrow. Your approved emergency profile stays one online scan away.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   <Link href="/order" className="button button-primary !min-h-12 !px-8 text-sm">
-                    <span>Get Your QR Sticker</span>
+                    <span>Create Free Digital QR</span>
                     <ArrowRight size={16} />
                   </Link>
                   <Link href="/contact" className="button button-secondary !min-h-12 !px-6 text-sm">

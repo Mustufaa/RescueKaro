@@ -30,4 +30,12 @@ class MigrationIntegrationTest {
             assertThat(result.getLong(1)).isEqualTo(1L);
         }
     }
+
+    @Test void stickerSequenceBeginsAtOneIndependentlyOfDigitalQrSerials() throws Exception {
+        try (var connection=dataSource.getConnection(); var statement=connection.createStatement();
+             var result=statement.executeQuery("SELECT nextval('sticker_serial_seq')")) {
+            assertThat(result.next()).isTrue();
+            assertThat(result.getLong(1)).isEqualTo(1L);
+        }
+    }
 }

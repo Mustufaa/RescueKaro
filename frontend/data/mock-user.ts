@@ -5,7 +5,7 @@ export const mockUser: User = {
   fullName: "Aarav Sharma",
   email: "aarav@example.com",
   phone: "+91 98XXX XXXXX",
-  phoneVerified: true,
+  phoneVerified: false,
 };
 
 export const mockEmergencyProfile: EmergencyProfile = {

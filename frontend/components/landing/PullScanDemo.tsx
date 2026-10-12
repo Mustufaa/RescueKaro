@@ -82,7 +82,7 @@ export function PullScanDemo() {
               <div className="relative rounded-3xl border-4 border-slate-700 bg-white p-5 shadow-2xl ring-4 ring-black/40">
                 <div className="mb-2 flex items-center justify-between text-[9px] font-black tracking-widest text-[#07182d]">
                   <span>RESCUE<span className="text-rescue">KARO</span></span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5">OFFLINE ID</span>
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5">QR LINK</span>
                 </div>
                 <QRMark className="w-full" />
                 <p className="mt-2 text-center text-[9px] font-black tracking-wider text-[#07182d]">
@@ -135,7 +135,7 @@ export function PullScanDemo() {
               <div className="mb-3 flex items-center justify-between px-1 text-[9px] font-bold text-slate-400">
                 <span>PHONE CAMERA</span>
                 <span className="flex items-center gap-1 text-emerald-400">
-                  <Scan size={11} /> 100% OFFLINE
+                  <Scan size={11} /> ONLINE PROFILE
                 </span>
               </div>
 

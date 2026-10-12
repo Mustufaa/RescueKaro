@@ -63,9 +63,9 @@ export function Navbar() {
           </Link>
           <Link
             className="button button-primary !min-h-[44px] !w-auto !px-3.5 !py-2 text-xs sm:!px-5"
-            href="/order"
+            href="/register"
           >
-            <span>Get RescueKaro</span>
+            <span>Get Started</span>
             <ArrowRight size={14} className="hidden sm:inline" />
           </Link>
           <button
@@ -103,7 +103,7 @@ export function Navbar() {
 
             <div className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-400">
               <ShieldCheck size={16} className="shrink-0" />
-              <span>Offline Emergency QR • Works 100% App-Free</span>
+              <span>Online Emergency QR • No App Needed</span>
             </div>
 
             <nav className="flex flex-col space-y-1" aria-label="Mobile navigation links">
@@ -132,8 +132,8 @@ export function Navbar() {
                 <Link className="button button-secondary !min-h-[44px] w-full text-xs" href="/login" onClick={() => setOpen(false)}>
                   Sign In
                 </Link>
-                <Link className="button button-primary !min-h-[44px] w-full text-xs" href="/order" onClick={() => setOpen(false)}>
-                  Get Starter Kit
+                <Link className="button button-primary !min-h-[44px] w-full text-xs" href="/register" onClick={() => setOpen(false)}>
+                  Get Started
                 </Link>
               </div>
             </div>

@@ -52,7 +52,7 @@ export default function ScanPage() {
                 First Responder Information
               </b>
               <p className="mt-1 leading-5 text-slate-400">
-                This emergency card was decoded directly from a physical RescueKaro offline QR badge. No network access or database login is required. Use the one-tap buttons above to dial emergency contacts or dispatch your current GPS coordinates.
+                This is a preview of an emergency card. A real RescueKaro sticker opens an online public profile, so internet access is required. No login is needed to view approved details. Use the one-tap buttons above to dial contacts or share your current GPS coordinates.
               </p>
             </div>
           </div>

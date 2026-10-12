@@ -1,6 +1,17 @@
 name: rescuekaro
 
 services:
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -35,16 +46,22 @@ services:
       FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:${FRONTEND_PORT:-3000}}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env file}
-      OTP_PROVIDER: ${OTP_PROVIDER:-mock}
-      OTP_TEST_CODE: ${OTP_TEST_CODE:-000111}
-      RAZORPAY_MODE: ${RAZORPAY_MODE:-simulation}
-      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
-      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
-      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
-      SPRING_MAIL_HOST: ${SMTP_HOST:-}
-      SPRING_MAIL_PORT: ${SMTP_PORT:-587}
-      SPRING_MAIL_USERNAME: ${SMTP_USERNAME:-}
-      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:-}
+      OTP_HASH_SECRET: ${OTP_HASH_SECRET:?Set OTP_HASH_SECRET in the root .env file}
+      OTP_EXPIRY_SECONDS: ${OTP_EXPIRY_SECONDS:-300}
+      OTP_MAX_ATTEMPTS: ${OTP_MAX_ATTEMPTS:-5}
+      OTP_RESEND_COOLDOWN_SECONDS: ${OTP_RESEND_COOLDOWN_SECONDS:-60}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-preview@rescuekaro.test}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-RescueKaro}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      SMTP_STARTTLS_REQUIRED: ${SMTP_STARTTLS_REQUIRED:-false}
+      SMTP_CONNECTION_TIMEOUT_MS: ${SMTP_CONNECTION_TIMEOUT_MS:-5000}
+      SMTP_READ_TIMEOUT_MS: ${SMTP_READ_TIMEOUT_MS:-5000}
+      SMTP_WRITE_TIMEOUT_MS: ${SMTP_WRITE_TIMEOUT_MS:-5000}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
     volumes:
@@ -53,6 +70,8 @@ services:
       - maven_repository:/root/.m2
     depends_on:
       db:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
@@ -72,7 +91,7 @@ services:
       NEXT_TELEMETRY_DISABLED: 1
       WATCHPACK_POLLING: "true"
       API_INTERNAL_BASE_URL: http://backend:8080/api/v1
-      NEXT_PUBLIC_SITE_URL: ${PUBLIC_APP_URL:-http://localhost:${FRONTEND_PORT:-3000}}
+      SITE_URL: ${PUBLIC_APP_URL:-http://localhost:${FRONTEND_PORT:-3000}}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     volumes:

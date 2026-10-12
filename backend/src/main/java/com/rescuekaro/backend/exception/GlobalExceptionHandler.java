@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.rescuekaro.backend.dto.ApiError;
 import com.rescuekaro.backend.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -37,6 +38,27 @@ public class GlobalExceptionHandler {
                 fields.putIfAbsent(violation.getPropertyPath().toString(), violation.getMessage()));
         return error(HttpStatus.UNPROCESSABLE_ENTITY, "VALIDATION_ERROR",
                 "Please correct the highlighted fields.", fields);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataConflict(DataIntegrityViolationException exception) {
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof java.sql.SQLException sql && "23505".equals(sql.getSQLState())) {
+                String detail = sql.getMessage() == null ? "" : sql.getMessage();
+                if (detail.contains("users_phone_e164_key"))
+                    return error(HttpStatus.CONFLICT, "PHONE_ALREADY_REGISTERED",
+                            "This phone number is already registered. Please sign in.", Map.of());
+                if (detail.contains("pending_registrations_phone_e164_key"))
+                    return error(HttpStatus.CONFLICT, "PHONE_PENDING_VERIFICATION",
+                            "This phone number has a pending email verification. Continue with the original email address.", Map.of());
+                if (detail.contains("users_email_key") || detail.contains("pending_registrations_email_key"))
+                    return error(HttpStatus.CONFLICT, "ACCOUNT_ALREADY_EXISTS",
+                            "This email is already registered or awaiting verification.", Map.of());
+            }
+            cause = cause.getCause();
+        }
+        return error(HttpStatus.CONFLICT, "DATA_CONFLICT", "This record conflicts with existing data.", Map.of());
     }
 
     @ExceptionHandler(Exception.class)

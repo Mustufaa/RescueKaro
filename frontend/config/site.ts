@@ -1,13 +1,14 @@
 export const siteConfig = {
   name: "RescueKaro",
   tagline: "Scan Karo. Safe Karo.",
-  description: "Protected emergency QR stickers that keep important information one scan away - even without an app or internet.",
+  description: "Protected emergency QR stickers that open your approved emergency profile online, without an app or login.",
   price: 99,
   replacementPrice: 50,
   supportEmail: "team@rescuekaro.com",
   supportPhone: "+91 94550 05380",
   address: "Lucknow, Uttar Pradesh, India",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://rescuekaro.example"
+  url: process.env.SITE_URL || (process.env.RENDER_EXTERNAL_HOSTNAME
+    ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : "http://localhost:3000")
 };
 
 export const navItems = [

@@ -1,5 +1,8 @@
-import type { Metadata } from "next";
-import { OrderFlow } from "@/components/order/OrderFlow";
-import {AuthGate} from "@/components/auth/AuthGate";
-export const metadata:Metadata={title:"Order RescueKaro",description:"Personalise and order your RescueKaro emergency QR Starter Kit."};
-export default function Page(){return <AuthGate><OrderFlow/></AuthGate>}
+import { Suspense } from "react";
+import { AuthGate } from "@/components/auth/AuthGate";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { QrWizard } from "@/components/qr/QrWizard";
+
+export default function Page() {
+  return <AuthGate><DashboardShell><Suspense fallback={<p className="text-slate-300">Loading QR setup...</p>}><QrWizard /></Suspense></DashboardShell></AuthGate>;
+}

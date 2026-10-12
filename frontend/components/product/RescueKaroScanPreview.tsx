@@ -119,7 +119,7 @@ export function RescueKaroScanPreview({
         <BrandLogo variant="full" />
         <span className="flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-red-700">
           <span className="h-2 w-2 animate-pulse rounded-full bg-red-600" />
-          Offline ID
+          Online Profile
         </span>
       </header>
 

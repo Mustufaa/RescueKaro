@@ -11,19 +11,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://rescuekaro.example"),
+  metadataBase: new URL(process.env.SITE_URL || (process.env.RENDER_EXTERNAL_HOSTNAME
+    ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : "http://localhost:3000")),
   title: {
     default: "RescueKaro - Emergency Information, One Scan Away",
     template: "%s | RescueKaro",
   },
   description:
-    "Protected offline emergency QR stickers for helmets, vehicles, bags and personal items. No app, login, or server lookup required.",
+    "Protected emergency QR stickers for helmets, vehicles, bags and personal items. Scan online without an app or login.",
   icons: {
     icon: "/brand/logo/rescuekaro-emblem.png",
   },
   openGraph: {
     title: "RescueKaro - Emergency Information, One Scan Away",
-    description: "Protected offline emergency QR stickers for safer everyday journeys.",
+    description: "Protected emergency QR stickers that open an online emergency profile.",
     type: "website",
   },
   twitter: {

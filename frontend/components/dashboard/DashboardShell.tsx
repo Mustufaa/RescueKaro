@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   Package,
+  QrCode,
   Settings,
   ShieldCheck,
   User,
@@ -22,6 +23,7 @@ import {authService} from "@/services/auth.service";
 const links = [
   [Home, "Overview", "/dashboard"],
   [ShieldCheck, "My RescueKaro", "/dashboard/rescuekaro"],
+  [QrCode, "Generate QR", "/order"],
   [Package, "Orders", "/dashboard/orders"],
   [HeartPulse, "Emergency profile", "/dashboard/emergency-profile"],
   [Settings, "Settings", "/dashboard/settings"],
@@ -31,6 +33,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [name,setName]=useState("");
+  const isActive = (href: string) => path === href || (href !== "/dashboard" && path.startsWith(href))
+    || (href === "/dashboard/orders" && path.startsWith("/dashboard/sticker-orders"));
   useEffect(()=>{authService.session().then(({user})=>setName(user.fullName)).catch(()=>{})},[]);
 
   useEffect(() => {
@@ -63,7 +67,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             onClick={() => setOpen(false)}
             className={cn(
               "flex min-h-[44px] items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-150 touch-target",
-              path === href || (href !== "/dashboard" && path.startsWith(href))
+              isActive(href)
                 ? "border border-safety/30 bg-[#0b2447] text-white shadow-md"
                 : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
             )}
@@ -73,7 +77,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Icon
               size={17}
               className={
-                path === href || (href !== "/dashboard" && path.startsWith(href))
+                isActive(href)
                   ? "text-safety shrink-0"
                   : "text-slate-500 shrink-0"
               }

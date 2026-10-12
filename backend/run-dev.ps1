@@ -42,10 +42,6 @@ Set-DefaultEnvironmentValue -Name 'DB_USERNAME' -Value 'postgres'
 Set-DefaultEnvironmentValue -Name 'SERVER_PORT' -Value '8080'
 Set-DefaultEnvironmentValue -Name 'FRONTEND_URL' -Value 'http://localhost:3000'
 Set-DefaultEnvironmentValue -Name 'PUBLIC_APP_URL' -Value 'http://localhost:3000'
-Set-DefaultEnvironmentValue -Name 'OTP_PROVIDER' -Value 'mock'
-if ([string]::IsNullOrWhiteSpace($env:OTP_TEST_CODE) -and [string]::IsNullOrWhiteSpace($env:DEV_OTP_CODE)) {
-    Set-DefaultEnvironmentValue -Name 'OTP_TEST_CODE' -Value '000111'
-}
 
 $serverPort = 0
 if (-not [int]::TryParse($env:SERVER_PORT, [ref] $serverPort) -or

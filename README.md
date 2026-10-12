@@ -120,44 +120,43 @@ npm.cmd run frontend:build
 npm.cmd run backend:test
 ```
 
-## Authentication, checkout, and dashboard
+## Authentication and digital QR
 
-Set `OTP_PROVIDER=mock` and `OTP_TEST_CODE=000111` only for local development.
-Set `SPRING_PROFILES_ACTIVE=prod` or `APP_ENV=production` for production; startup
-rejects mock OTP and non-HTTPS public QR URLs in that environment.
-Choose **Get Your QR Sticker**, register with an Indian mobile number, request the
-signup code, enter `000111`, and finish registration. Login uses a separate phone
-OTP challenge. The order wizard then saves the emergency profile and creates a
-backend order without another phone challenge. With `RAZORPAY_MODE=simulation`
-and the `dev` backend profile, payment is simulated on the backend and activates
-two stickers. In `test` or `live` mode, configure `RAZORPAY_KEY_ID` and
-`RAZORPAY_KEY_SECRET` for signed Razorpay checkout.
+Configure SMTP and `OTP_HASH_SECRET` before starting the backend. Registration
+collects a name, email, password, and contact phone, then sends a code to the
+email. The account is created only after that code is verified. Login requires
+email, password, and a separate email code. Password reset has its own email
+code. Phone numbers are contact fields and are not verified by email OTP.
+
+Signed-in users can save an emergency profile and generate, view, and download a
+digital QR without payment or a shipping order. Physical sticker ordering and
+payment are currently unavailable. Existing order and payment records remain
+readable in the dashboard.
 
 `PUBLIC_APP_URL` must be the public frontend origin. Production requires HTTPS;
 for example `https://rescuekaro.com`. `FRONTEND_URL` must be the exact frontend
 origin allowed by CORS. Configure `API_INTERNAL_BASE_URL` with a backend URL
 ending in `/api/v1`. The Next.js
 proxy keeps session cookies on the frontend origin. Keep `JWT_SECRET`, database credentials, OTP
-configuration, and Razorpay secrets on the backend. Flyway applies
-`V2__profile_age.sql` automatically when the backend starts. It adds a nullable
-age column and preserves existing profiles. The baseline already contains the
+configuration on the backend. Flyway applies the additive
+`V3__email_otp.sql` migration, preserving existing users, QR data, and serials.
+Existing accounts verify their email on their next password-plus-OTP login. The baseline contains the
 user, order, payment, sticker, and serial sequence tables.
 
 The customer dashboard and order history now load the current user's records.
 Emergency profile edits update the same public token used by printed stickers.
-Production SMS delivery, fulfillment, replacements, reviews/contact, admin CRUD,
+Fulfillment, replacements, reviews/contact, admin CRUD,
 exports/deletion, notifications, and background jobs remain separate work.
 
-Do not treat the remaining local mock repository or mock payment checkout as a
-production integration. Emergency data is never embedded in a QR: the QR holds
+Emergency data is never embedded in a QR: the QR holds
 only a stable URL such as `/qr/RK2026000001/<private-token>`. The visible serial
 uses `RK`, the India-local issue year, and a zero-padded PostgreSQL sequence.
 The unpredictable token remains required to open the public emergency profile.
 
 ## Deployment note
 
-The root `vercel.json` installs and builds the Next.js app in `frontend/` for
-Vercel projects whose Root Directory is still the repository root. If the
-project Root Directory is set to `frontend`, Vercel uses that app directly.
-Set `API_INTERNAL_BASE_URL` to the deployed backend's HTTPS URL ending in
-`/api/v1` so the frontend API rewrite can reach it at runtime.
+See [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md) for the Render Blueprint, manual
+service settings, environment variables, and deployment checks. See
+[DEPLOYMENT.md](DEPLOYMENT.md) for local and provider-neutral setup. The frontend
+API client keeps browser requests on the frontend origin and Next.js rewrites
+`/api/v1/*` to the backend, so auth cookies remain same-origin.

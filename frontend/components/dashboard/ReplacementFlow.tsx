@@ -54,7 +54,7 @@ export function ReplacementFlow() {
             <p className="mt-1 text-xs text-slate-400">Select which active sticker you need replaced.</p>
             <button className="mt-6 w-full rounded-2xl border-2 border-safety bg-blue-950/40 p-5 text-left transition hover:bg-blue-900/40 touch-target">
               <b className="block text-base text-white">RK-2026-1042 — Helmet Kit</b>
-              <span className="mt-1 block text-xs text-slate-300">Active Offline QR • Production Verified</span>
+              <span className="mt-1 block text-xs text-slate-300">Active QR • Online Profile</span>
             </button>
           </>
         )}
@@ -144,7 +144,7 @@ export function ReplacementFlow() {
           <>
             <h2 className="text-xl sm:text-2xl font-black text-white">Replacement Processing</h2>
             <p className="mt-2 text-xs sm:text-sm leading-6 text-slate-300">
-              Warranty eligibility is verified during checkout. Damaged or defective starter kits qualify for free dispatch under our warranty policy.
+              Physical sticker replacements are currently unavailable. Existing requests remain available for review.
             </p>
             <div className="mt-6 flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between font-black text-sm text-white">
               <span>Standard Replacement Dispatch</span>

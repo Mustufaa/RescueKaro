@@ -26,17 +26,21 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-Set `DB_PASSWORD` and `JWT_SECRET` to private local values. Keep `.env` private;
-Git ignores it. The supplied `DEV_OTP_CODE` defaults to `000111` for this
-development profile only. The `prod` Spring profile disables the development
-OTP provider; do not deploy this Compose development configuration as production.
-
-The Razorpay and SMTP variables are optional placeholders. The current checkout
-does not implement a real payment or SMS provider flow, so these values are not
-needed to start the stack. If credentials are supplied later, keep Razorpay
-secret and webhook keys, SMTP credentials, and the JWT signing secret in backend
-environment only. Only a Razorpay public key should ever be exposed to browser
-code when a real checkout is implemented.
+Set `DB_PASSWORD`, `JWT_SECRET`, and `OTP_HASH_SECRET` to private local values.
+Keep `.env` private; Git ignores it. Compose uses the SMTP settings in this
+root `.env` file. Its example settings send to [Mailpit](https://github.com/axllent/mailpit),
+which captures OTP emails at `http://localhost:8025` without delivering them
+to real inboxes. To receive OTPs in Gmail, set the root `SMTP_*` values to
+your Gmail SMTP host, port, App Password, and sender address, then recreate
+the backend container. Independent backend runs use `backend/.env` instead.
+The QR wizard saves progress to PostgreSQL and records physical sticker requests
+without a payment step. The `dev` profile allows localhost URLs for QR previews
+and copyable links on the development computer. For phone scans and production,
+set `PUBLIC_APP_URL` to the deployed frontend HTTPS origin and recreate the backend
+container. That frontend must use the backend/database issuing the QR;
+a separate deployed database will not contain a locally issued token. No
+shipment is booked automatically; requests start as
+`REQUESTED` with payment status `NOT_REQUIRED`.
 
 | Variable | Purpose | Default |
 |---|---|---|
@@ -45,9 +49,10 @@ code when a real checkout is implemented.
 | `DB_PORT` | Windows localhost PostgreSQL port | `5432` |
 | `FRONTEND_PORT` | Windows localhost Next.js port | `3000` |
 | `BACKEND_PORT` | Windows localhost Spring Boot port | `8080` |
-| `PUBLIC_APP_URL` | Base URL written into generated sticker links | `http://localhost:3000` |
+| `PUBLIC_APP_URL` | Frontend origin for QR URLs | Localhost for development previews; public HTTPS for phone scans and production |
 | `JWT_SECRET` | Development token signing secret | Set a private random value |
-| `DEV_OTP_CODE` | Explicit development OTP code | `000111` |
+| `OTP_HASH_SECRET` | HMAC key for email codes | Set a separate private random value |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | Compose and standalone backend email delivery | Mailpit in the example; set your provider for real inboxes |
 
 Browser requests use `/api/v1` on the frontend origin. Next.js proxies them to
 the private Compose DNS address `http://backend:8080/api/v1`. The `backend`
@@ -83,7 +88,8 @@ Open:
 - PostgreSQL: `localhost:5432` (TCP; use pgAdmin or `psql`)
 
 The backend container watches Java source files, recompiles them with Maven, and
-Spring Boot DevTools restarts the application when compiled classes change. This
+Spring Boot DevTools restarts only after a successful compile updates the
+`.reloadtrigger` file. This prevents reloads while class files are being written. This
 is an explicit compile-and-restart loop; merely mounting Java source would not
 reload compiled code.
 
@@ -179,8 +185,10 @@ do not remove the data volume as a shortcut.
 
 ## Phone QR scanning
 
-By default, sticker links use `localhost`, which works on the development PC but
-not on a phone (`localhost` on the phone means the phone itself). The app and
+By default, digital QR links use `localhost`, which works on the development PC but
+not on a phone (`localhost` on the phone means the phone itself). Physical
+sticker generation allows local previews in the `dev` profile; production requires
+a configured public HTTPS frontend origin. The app and
 backend ports are bound to `127.0.0.1`, so they are not exposed to the LAN or
 public internet. Phone testing requires deliberately configuring a reachable
 frontend URL and a safe access path for both frontend and API. Do not expose the

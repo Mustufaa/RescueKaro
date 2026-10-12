@@ -19,7 +19,7 @@ export function GeneratedQRPanel() {
 
   return (
     <section className="glass-panel p-5 sm:p-6 text-center">
-      <h2 className="font-black text-white text-base">Physical Emergency QR</h2>
+      <h2 className="font-black text-white text-base">Digital Emergency QR</h2>
       {url && (
         <div className="mx-auto mt-4 w-full max-w-[240px] rounded-2xl bg-white p-3 shadow-xl">
           <Image
@@ -27,7 +27,7 @@ export function GeneratedQRPanel() {
             src={url}
             width={520}
             height={520}
-            alt="Generated emergency QR associated with this order"
+            alt="Generated emergency QR linked to your profile"
             className="h-auto w-full rounded-xl object-contain"
           />
         </div>

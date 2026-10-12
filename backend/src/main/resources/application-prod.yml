@@ -10,5 +10,5 @@ server:
         secure: true
 
 app:
-  otp:
-    development-code: ""
+  security:
+    jwt-secret: ${JWT_SECRET}

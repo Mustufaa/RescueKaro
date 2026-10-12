@@ -15,6 +15,7 @@ public class QrCodeController {
     private final QrCodeService qr;
     public QrCodeController(QrCodeService qr){this.qr=qr;}
     @GetMapping("/qr-codes") public ApiResponse<List<QrCodeService.OwnerQr>> list(Authentication auth){return ApiResponse.of(qr.list(UUID.fromString(auth.getName())));}
+    @PostMapping("/qr-codes") public ApiResponse<QrCodeService.OwnerQr> create(Authentication auth){return ApiResponse.of(qr.createDigital(UUID.fromString(auth.getName())));}
     @GetMapping("/qr-codes/{id}") public ApiResponse<QrCodeService.OwnerQr> one(Authentication auth,@PathVariable UUID id){return ApiResponse.of(qr.owned(UUID.fromString(auth.getName()),id));}
     @GetMapping(value="/qr-codes/{id}.png",produces=MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> png(Authentication auth,@PathVariable UUID id){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).header("Content-Disposition","attachment; filename=\"rescuekaro-"+id+".png\"").body(qr.png(UUID.fromString(auth.getName()),id));}

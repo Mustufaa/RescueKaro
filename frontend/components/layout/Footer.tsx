@@ -80,7 +80,7 @@ export function Footer() {
             Scan to Safe Life
           </p>
           <p className="mt-3 max-w-sm text-xs leading-6 text-slate-400">
-            Protected offline emergency QR stickers engineered to keep essential medical and contact details one scan away—even without cell service.
+            Protected emergency QR stickers that open approved medical and contact details online, with no app or login required.
           </p>
 
           <div className="mt-6 space-y-1 text-xs text-slate-300">
@@ -145,7 +145,7 @@ export function Footer() {
           <span>© {new Date().getFullYear()} RescueKaro. All rights reserved.</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
-          <span>Offline Architecture</span>
+          <span>Online Emergency Profile</span>
           <span>•</span>
           <span>Physical Cover Privacy</span>
           <span>•</span>

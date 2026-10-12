@@ -1,20 +1,44 @@
 const BROWSER_API_BASE_URL = "/api/v1";
 
 // Browser requests stay on the frontend origin and use the Next.js API rewrite.
-// Server requests can reach the backend directly inside the Compose network.
-const SERVER_API_BASE_URL =
+// Server requests use the configured backend URL; Free Render uses public HTTPS.
+const configuredServerApiBaseUrl =
   process.env.API_INTERNAL_BASE_URL || "http://localhost:8080/api/v1";
+const trimmedServerApiBaseUrl = (configuredServerApiBaseUrl.includes("://")
+  ? configuredServerApiBaseUrl
+  : /\.onrender\.com(?:\/|$)/i.test(configuredServerApiBaseUrl)
+    ? `https://${configuredServerApiBaseUrl}`
+    : `http://${configuredServerApiBaseUrl}`).replace(/\/+$/, "");
+const SERVER_API_BASE_URL = trimmedServerApiBaseUrl.endsWith("/api/v1")
+  ? trimmedServerApiBaseUrl
+  : `${trimmedServerApiBaseUrl}/api/v1`;
 
 export const API_BASE_URL = BROWSER_API_BASE_URL;
 
 export const BACKEND_ORIGIN = (() => {
   try {
-    return new URL(API_BASE_URL,typeof window!=="undefined"?window.location.origin:"http://localhost:3000").origin;
+    return typeof window === "undefined"
+      ? new URL(SERVER_API_BASE_URL).origin
+      : window.location.origin;
   } catch {
     return "";
   }
 })();
 let csrfToken = "";
+let sessionRefresh: Promise<unknown> | null = null;
+
+function refreshAt(base: string) {
+  if (typeof window === "undefined") return request(`${base}/auth/refresh`, { method: "POST" }, false);
+  if (!sessionRefresh) {
+    sessionRefresh = request(`${base}/auth/refresh`, { method: "POST" }, false)
+      .finally(() => { sessionRefresh = null; });
+  }
+  return sessionRefresh;
+}
+
+export function refreshSession() {
+  return refreshAt(typeof window === "undefined" ? SERVER_API_BASE_URL : BROWSER_API_BASE_URL);
+}
 
 type ApiEnvelope<T> = { data: T; meta?: { requestId?: string } };
 type ApiErrorBody = {
@@ -71,10 +95,10 @@ async function request<T>(url: string, init?: RequestInit, retry=true): Promise<
     throw error;
   }
 
-  if(response.status===401 && retry && url.includes("/api/v1/") && !/\/auth\/(login|register|refresh|logout|otp)/.test(url)){
+  if(response.status===401 && retry && url.includes("/api/v1/") && !/\/auth\//.test(url)){
     try{
       const base=url.slice(0,url.indexOf("/api/v1/")+7);
-      await request(`${base}/auth/refresh`,{method:"POST"},false);
+      await refreshAt(base);
       return request<T>(url,init,false);
     }catch{ /* The original response carries the useful authentication error. */ }
   }
@@ -118,8 +142,11 @@ export function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function backendRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const origin = typeof window === "undefined"
-    ? new URL(SERVER_API_BASE_URL).origin
-    : BACKEND_ORIGIN;
-  return request<T>(`${origin}${normalizedPath}`, init);
+  const baseUrl = typeof window === "undefined" ? SERVER_API_BASE_URL : BROWSER_API_BASE_URL;
+  const apiPath = normalizedPath === "/api/v1"
+    ? ""
+    : normalizedPath.startsWith("/api/v1/")
+      ? normalizedPath.slice("/api/v1".length)
+      : normalizedPath;
+  return request<T>(`${baseUrl.replace(/\/$/, "")}${apiPath}`, init);
 }

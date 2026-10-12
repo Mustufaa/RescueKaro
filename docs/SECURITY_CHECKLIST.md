@@ -8,7 +8,6 @@
 - [x] Paise amounts, database constraints, Flyway ownership, `ddl-auto=validate`
 - [ ] Distributed rate limiting and abuse monitoring
 - [ ] Application-layer medical/contact encryption with managed key rotation
-- [ ] Production SMS/DLT and password-reset mail delivery
-- [ ] Razorpay signed verification, raw webhook verification, replay/reconciliation tests
+- [ ] Verify password-reset mail delivery with production SMTP credentials
 - [ ] Admin audit UI, backup/restore drill, retention/deletion workflow
-- [ ] Privacy, medical-data, consent, payment, refund, and replacement legal review
+- [ ] Privacy, medical-data, consent, and replacement legal review

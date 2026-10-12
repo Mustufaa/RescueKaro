@@ -4,6 +4,7 @@ set -eu
 cd /workspace
 
 sh ./mvnw -B -DskipTests compile
+touch target/classes/.reloadtrigger
 sh ./mvnw -B spring-boot:run &
 app_pid=$!
 
@@ -24,6 +25,8 @@ while kill -0 "$app_pid" 2>/dev/null; do
   if [ "$current_signature" != "$last_signature" ]; then
     echo "Backend source changed; recompiling for Spring Boot DevTools restart..."
     if sh ./mvnw -B -DskipTests compile; then
+      # Restart only after all class files have been written successfully.
+      touch target/classes/.reloadtrigger
       last_signature=$current_signature
     else
       echo "Backend compilation failed. Fix the source and save again to retry." >&2

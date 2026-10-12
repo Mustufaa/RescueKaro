@@ -4,6 +4,9 @@ spring:
       on-profile: dev
   jpa:
     show-sql: false
+  devtools:
+    restart:
+      trigger-file: .reloadtrigger
 
 management:
   health:

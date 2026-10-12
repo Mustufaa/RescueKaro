@@ -17,4 +17,8 @@ public final class QrIdentity {
     public static String publicUrl(String origin, long number, Instant createdAt, String token) {
         return origin.replaceAll("/$", "") + "/qr/" + serialCode(number, createdAt) + "/" + token;
     }
+
+    public static String publicUrl(String origin, long stickerSerial, String token) {
+        return origin.replaceAll("/$", "") + "/qr/" + stickerSerial + "/" + token;
+    }
 }

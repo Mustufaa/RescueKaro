@@ -13,4 +13,9 @@ class QrIdentityTest {
         assertThat(QrIdentity.publicUrl("https://rescuekaro.example/", 1, indiaNewYear, "private-token"))
             .isEqualTo("https://rescuekaro.example/qr/RK2026000001/private-token");
     }
+
+    @Test void physicalStickerUrlUsesPlainSerialAndPublicToken() {
+        assertThat(QrIdentity.publicUrl("https://rescuekaro.example/", 1, "public-token"))
+                .isEqualTo("https://rescuekaro.example/qr/1/public-token");
+    }
 }
