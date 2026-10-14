@@ -31,3 +31,19 @@ Signup collects name, unique normalized Indian mobile number, email, and passwor
 The app uses `APP_PUBLIC_BASE_URL` for newly issued QR URLs. Set this to the actual HTTPS frontend origin before issuing physical stickers. Existing token routes and PostgreSQL `BIGINT` serial sequences remain intact.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for Supabase, Resend, Cloud Run, and migration steps.
+
+## Vercel frontend project
+
+If the frontend is deployed on Vercel, set the project's **Root Directory** to
+`frontend` under **Settings → Build and Deployment → Root Directory**, save it,
+and redeploy. The repository root `package.json` contains helper scripts; the
+Next.js dependency and `build` script are in `frontend/package.json`. Leave the
+Framework Preset as **Next.js** and use the default install, build, and output
+settings. Do not add Next.js to the repository root to work around a wrong Root
+Directory.
+
+For the deployed frontend, set `API_INTERNAL_BASE_URL` to the backend's HTTPS
+origin, `API_PROXY_IP_SECRET` to the same private value used by the backend,
+and `SITE_URL` to the public frontend HTTPS origin. These are server runtime
+variables; no `NEXT_PUBLIC_*` variable is required. See [DEPLOYMENT.md](DEPLOYMENT.md)
+for the backend and database variables.
