@@ -5,26 +5,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.reset;
 
 import com.rescuekaro.backend.auth.AuthService;
+import com.rescuekaro.backend.auth.ResendEmailService;
 import com.rescuekaro.backend.emergency.EmergencyProfileDto;
 import com.rescuekaro.backend.emergency.EmergencyProfileService;
 import com.rescuekaro.backend.qr.QrCodeService;
 import com.rescuekaro.backend.qr.QrWizardService;
 import com.rescuekaro.backend.exception.ApiException;
-import jakarta.mail.Session;
-import jakarta.mail.Multipart;
-import jakarta.mail.internet.MimeMessage;
-import java.util.Properties;
-import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.mail.MailSendException;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.ActiveProfiles;
@@ -40,15 +34,14 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.mockito.ArgumentCaptor;
 
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("dev")
 @AutoConfigureMockMvc
 @SpringBootTest(properties = {
-        "SMTP_HOST=localhost", "SMTP_USERNAME=test", "SMTP_PASSWORD=test",
-        "SMTP_FROM=verify@example.com", "OTP_HASH_SECRET=test-only-email-otp-hash-key-at-least-32-characters",
-        "PUBLIC_APP_URL=https://rescuekaro.example"
+        "EMAIL_PROVIDER=resend", "RESEND_API_KEY=test-only", "EMAIL_FROM=verify@example.com",
+        "OTP_HASH_SECRET=test-only-email-otp-hash-key-at-least-32-characters",
+        "APP_PUBLIC_BASE_URL=https://rescuekaro.example"
 })
 class EmailOtpIntegrationTest {
     @Container static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
@@ -58,7 +51,7 @@ class EmailOtpIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    @MockitoBean JavaMailSender mail;
+    @MockitoBean ResendEmailService mail;
     @Autowired AuthService auth;
     @Autowired JdbcClient db;
     @Autowired EmergencyProfileService profiles;
@@ -66,15 +59,16 @@ class EmailOtpIntegrationTest {
     @Autowired QrWizardService wizard;
     @Autowired MockMvc http;
 
-    @BeforeEach void prepareMail() {
-        when(mail.createMimeMessage()).thenAnswer(call -> new MimeMessage(Session.getInstance(new Properties())));
-    }
+    @BeforeEach void prepareMail() { reset(mail); }
 
     @Test void realProviderSendsDynamicCodeAndRequiresItBeforeSession() throws Exception {
         var pending = auth.register("Email User", "email@example.com", "9876543210", "Abc123", "email-test-ip");
+        assertThat(pending.expiresIn()).isEqualTo(600);
         assertThat(db.sql("SELECT count(*) FROM users WHERE email='email@example.com'").query(Long.class).single()).isZero();
         String firstCode = lastCode();
         assertThat(firstCode).matches("\\d{6}");
+        assertThat(db.sql("SELECT otp_hash FROM email_otp_challenges WHERE id=:id").param("id", pending.requestId())
+                .query(String.class).single()).hasSize(64).isNotEqualTo(firstCode);
         String wrongCode = firstCode.equals("000000") ? "111111" : "000000";
         assertThatThrownBy(() -> auth.verifyRegistration(pending.requestId(), wrongCode)).isInstanceOf(ApiException.class);
         var user = auth.verifyRegistration(pending.requestId(), firstCode).user();
@@ -82,14 +76,33 @@ class EmailOtpIntegrationTest {
         assertThatThrownBy(() -> auth.verifyRegistration(pending.requestId(), firstCode)).isInstanceOf(ApiException.class);
 
         db.sql("UPDATE email_otp_challenges SET next_send_at=now()-interval '1 minute' WHERE email='email@example.com'").update();
-        var login = auth.login("email@example.com", "Abc123", "email-test-ip");
-        String loginCode = lastCode();
-        assertThat(auth.verifyLogin(login.requestId(), loginCode).user().id()).isEqualTo(user.id());
-        assertThatThrownBy(() -> auth.verifyLogin(login.requestId(), loginCode)).isInstanceOf(ApiException.class);
+        assertThat(auth.login("email@example.com", "Abc123", "email-test-ip").session().user().id()).isEqualTo(user.id());
+        http.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"email@example.com\",\"password\":\"Abc123\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.user.email").value("email@example.com"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().exists("Set-Cookie"));
+        http.perform(post("/api/v1/auth/verify-login-otp").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"requestId\":\"" + pending.requestId() + "\",\"code\":\"" + firstCode + "\"}"))
+                .andExpect(status().isNotFound());
     }
 
-    @Test void smtpFailureDoesNotLeavePendingRegistrationOrChallenge() {
-        doThrow(new MailSendException("test failure")).when(mail).send(any(MimeMessage.class));
+    @Test void existingUnverifiedUserResumesVerificationAfterCorrectPassword() {
+        var signup = auth.register("Legacy User", "legacy@example.com", "9123456711", "Abc123", "legacy-ip");
+        var original = auth.verifyRegistration(signup.requestId(), lastCode());
+        db.sql("UPDATE users SET email_verified=false WHERE id=:id").param("id", original.user().id()).update();
+        db.sql("UPDATE email_otp_challenges SET next_send_at=now()-interval '1 minute' WHERE email='legacy@example.com'").update();
+        assertThatThrownBy(() -> auth.refresh(original.refreshToken())).isInstanceOf(ApiException.class);
+        var login = auth.login("legacy@example.com", "Abc123", "legacy-ip");
+        assertThat(login.session()).isNull();
+        assertThat(login.verification()).isNotNull();
+        var resumed = auth.verifyRegistration(login.verification().requestId(), lastCode());
+        assertThat(resumed.user().id()).isEqualTo(original.user().id());
+        assertThat(auth.login("legacy@example.com", "Abc123", "legacy-ip").session()).isNotNull();
+    }
+
+    @Test void providerFailureDoesNotLeavePendingRegistrationOrChallenge() {
+        doThrow(new ApiException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "EMAIL_DELIVERY_FAILED", "test failure"))
+                .when(mail).sendRegistrationOtp(any(), any(), any(), any());
         assertThatThrownBy(() -> auth.register("Mail Failure", "failure@example.com", "9123456789", "Abc123", "failure-ip"))
                 .isInstanceOf(ApiException.class);
         assertThat(db.sql("SELECT count(*) FROM pending_registrations WHERE email='failure@example.com'").query(Long.class).single()).isZero();
@@ -108,7 +121,7 @@ class EmailOtpIntegrationTest {
     @Test void expiryAttemptLimitPurposeAndResendAreEnforced() throws Exception {
         var first = auth.register("Resend User", "resend@example.com", "9765432109", "Abc123", "resend-ip");
         String original = lastCode();
-        assertThatThrownBy(() -> auth.verifyLogin(first.requestId(), original)).isInstanceOf(ApiException.class);
+        assertThatThrownBy(() -> auth.resetPassword(first.requestId(), original, "Def456")).isInstanceOf(ApiException.class);
         assertThatThrownBy(() -> auth.resend(first.requestId(), "resend-ip")).isInstanceOf(ApiException.class);
         db.sql("UPDATE email_otp_challenges SET next_send_at=now()-interval '1 minute' WHERE id=:id")
                 .param("id", first.requestId()).update();
@@ -136,8 +149,9 @@ class EmailOtpIntegrationTest {
         var session = auth.verifyRegistration(signup.requestId(), lastCode());
         db.sql("UPDATE email_otp_challenges SET next_send_at=now()-interval '1 minute' WHERE email='reset@example.com'").update();
         var reset = auth.requestPasswordReset("reset@example.com", "reset-ip");
+        verify(mail).sendPasswordResetOtp(any(), any(), any(), any());
         String code = lastCode();
-        assertThatThrownBy(() -> auth.verifyLogin(reset.requestId(), code)).isInstanceOf(ApiException.class);
+        assertThatThrownBy(() -> auth.verifyRegistration(reset.requestId(), code)).isInstanceOf(ApiException.class);
         auth.resetPassword(reset.requestId(), code, "Def456");
         assertThatThrownBy(() -> auth.resetPassword(reset.requestId(), code, "Ghi789")).isInstanceOf(ApiException.class);
         assertThatThrownBy(() -> auth.refresh(session.refreshToken())).isInstanceOf(ApiException.class);
@@ -187,7 +201,7 @@ class EmailOtpIntegrationTest {
         http.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"fullName\":\"Other Person\",\"email\":\"other-phone@example.com\",\"phone\":\"+919345678901\",\"password\":\"Abc123\",\"confirmPassword\":\"Abc123\"}"))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.error.code").value("PHONE_ALREADY_REGISTERED"));
-        verify(mail, org.mockito.Mockito.times(1)).send(any(MimeMessage.class));
+        verify(mail, org.mockito.Mockito.times(1)).sendRegistrationOtp(any(), any(), any(), any());
     }
 
     @Test void wizardRestoresProgressAndIssuesDistinctIdempotentPhysicalStickers() throws Exception {
@@ -261,7 +275,7 @@ class EmailOtpIntegrationTest {
             assertThat(first.get(30, java.util.concurrent.TimeUnit.SECONDS) + second.get(30, java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(1);
             assertThat(db.sql("SELECT count(*) FROM pending_registrations WHERE phone_e164='+919678901234'").query(Long.class).single()).isEqualTo(1);
             assertThat(db.sql("SELECT count(*) FROM email_otp_challenges WHERE email IN ('race-one@example.com','race-two@example.com')").query(Long.class).single()).isEqualTo(1);
-            verify(mail, org.mockito.Mockito.times(1)).send(any(MimeMessage.class));
+        verify(mail, org.mockito.Mockito.times(1)).sendRegistrationOtp(any(), any(), any(), any());
         } finally { pool.shutdownNow(); }
     }
 
@@ -283,18 +297,12 @@ class EmailOtpIntegrationTest {
         catch (ApiException | org.springframework.dao.DataIntegrityViolationException conflict) { return 0; }
     }
 
-    private String lastCode() throws Exception {
-        ArgumentCaptor<MimeMessage> capture = ArgumentCaptor.forClass(MimeMessage.class);
-        verify(mail, org.mockito.Mockito.atLeastOnce()).send(capture.capture());
-        MimeMessage message = capture.getValue();
-        assertThat(message.getSubject()).contains("RescueKaro");
-        assertThat(message.getAllRecipients()[0].toString()).endsWith("@example.com");
-        Object content = message.getContent();
-        while (content instanceof Multipart multipart) content = multipart.getBodyPart(0).getContent();
-        String contents = content.toString();
-        assertThat(contents).contains("RescueKaro");
-        var match = Pattern.compile("(?<!\\d)\\d{6}(?!\\d)").matcher(contents);
-        assertThat(match.find()).isTrue();
-        return match.group();
+    private String lastCode() {
+        String code = org.mockito.Mockito.mockingDetails(mail).getInvocations().stream()
+                .filter(call -> call.getMethod().getName().startsWith("send") && call.getArguments().length == 4)
+                .reduce((first, second) -> second)
+                .map(call -> (String) call.getArgument(2)).orElseThrow();
+        assertThat(code).matches("\\d{6}");
+        return code;
     }
 }

@@ -91,6 +91,14 @@ public class AuthService {
     @Transactional(noRollbackFor = ApiException.class)
     public Session verifyRegistration(UUID challengeId, String code, String ip) {
         var challenge = otp.consume(challengeId, Purpose.REGISTRATION, code, ip);
+        if (challenge.userId() != null) {
+            UserView existing = db.sql("SELECT id,full_name,email,phone_e164,phone_verified,role FROM users "
+                    + "WHERE id=:id AND email=:email AND enabled=true FOR UPDATE")
+                    .param("id", challenge.userId()).param("email", challenge.email())
+                    .query((rs, n) -> user(rs)).optional().orElseThrow(AuthService::invalidOtp);
+            db.sql("UPDATE users SET email_verified=true WHERE id=:id").param("id", existing.id()).update();
+            return createSession(existing);
+        }
         Pending row = db.sql("SELECT full_name,email,phone_e164,password_hash,expires_at,consumed_at FROM pending_registrations "
                 + "WHERE id=:id FOR UPDATE")
                 .param("id", challenge.pendingRegistrationId())
@@ -108,33 +116,19 @@ public class AuthService {
         return createSession(new UserView(userId, row.fullName(), row.email(), row.phone(), false, "CUSTOMER"));
     }
 
-    public EmailOtpService.Sent login(String email, String password, String ip) {
+    @Transactional
+    public LoginResult login(String email, String password, String ip) {
         String address = normalizeEmail(email);
         loginRateLimiter.record(address, ip);
-        UserPassword row = db.sql("SELECT id,full_name,email,phone_e164,phone_verified,role,password_hash FROM users "
+        UserPassword row = db.sql("SELECT id,full_name,email,phone_e164,phone_verified,role,password_hash,email_verified FROM users "
                 + "WHERE email=:email AND enabled=true")
                 .param("email", address).query((rs, n) -> new UserPassword(
                         new UserView((UUID) rs.getObject("id"), rs.getString("full_name"), rs.getString("email"),
                                 rs.getString("phone_e164"), rs.getBoolean("phone_verified"), rs.getString("role")),
-                        rs.getString("password_hash"))).optional().orElse(null);
+                        rs.getString("password_hash"), rs.getBoolean("email_verified"))).optional().orElse(null);
         if (row == null || !passwords.matches(password, row.passwordHash())) throw invalidCredentials();
-        return otp.send(address, Purpose.LOGIN, row.user().id(), null, ip);
-    }
-
-    @Transactional(noRollbackFor = ApiException.class)
-    public Session verifyLogin(UUID challengeId, String code) {
-        return verifyLogin(challengeId, code, "local-test");
-    }
-
-    @Transactional(noRollbackFor = ApiException.class)
-    public Session verifyLogin(UUID challengeId, String code, String ip) {
-        var challenge = otp.consume(challengeId, Purpose.LOGIN, code, ip);
-        UserView user = db.sql("SELECT id,full_name,email,phone_e164,phone_verified,role FROM users "
-                + "WHERE id=:id AND email=:email AND enabled=true")
-                .param("id", challenge.userId()).param("email", challenge.email())
-                .query((rs, n) -> user(rs)).optional().orElseThrow(AuthService::invalidOtp);
-        db.sql("UPDATE users SET email_verified=true WHERE id=:id").param("id", user.id()).update();
-        return createSession(user);
+        if (!row.emailVerified()) return new LoginResult(null, otp.send(address, Purpose.REGISTRATION, row.user().id(), null, ip));
+        return new LoginResult(createSession(row.user()), null);
     }
 
     public EmailOtpService.Sent requestPasswordReset(String email, String ip) {
@@ -223,7 +217,8 @@ public class AuthService {
 
     public record UserView(UUID id, String fullName, String email, String phone, boolean phoneVerified, String role) {}
     public record Session(UUID sessionId, UserView user, String accessToken, String refreshToken) {}
-    private record UserPassword(UserView user, String passwordHash) {}
+    public record LoginResult(Session session, EmailOtpService.Sent verification) {}
+    private record UserPassword(UserView user, String passwordHash, boolean emailVerified) {}
     private record SessionRow(UUID id, UserView user) {}
     private record Pending(String fullName, String email, String phone, String passwordHash, Instant expiresAt, Timestamp consumedAt) {}
 }

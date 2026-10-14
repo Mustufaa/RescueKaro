@@ -2,7 +2,7 @@
 
 Implemented in the existing Next.js frontend and Java Spring Boot backend.
 Signup verification creates the authenticated session and opens `/order`.
-Login OTP verification opens `/dashboard`, including for users with no QR.
+Password login opens `/dashboard`, including for users with no QR.
 The wizard saves account-owned progress, validates earlier sections before
 advancing, and atomically saves the final profile, sticker request, and QR rows.
 
@@ -12,7 +12,7 @@ advancing, and atomically saves the final profile, sticker request, and QR rows.
 |---|---|---|
 | Get Started → `/register` | `POST /api/v1/auth/register` | Pending signup and existing email OTP |
 | Signup OTP | `POST /api/v1/auth/verify-email` | Session cookies, then `/order` |
-| `/login` and login OTP | `POST /api/v1/auth/login`, `POST /api/v1/auth/verify-login-otp` | Session cookies, then `/dashboard` |
+| `/login` | `POST /api/v1/auth/login` | Session cookies, then `/dashboard`; unverified legacy users complete email verification first |
 | `/order` | `GET`, `PUT /api/v1/qr-wizard` | Restore/save a private draft and current step |
 | Generate additional stickers | `POST /api/v1/qr-wizard/new` | Resume an incomplete draft or start another after completion |
 | Preview confirmation | `POST /api/v1/qr-wizard/finish` | Transactional and idempotent sticker issuance |
@@ -58,16 +58,16 @@ backend automatically applied the new V4 migration. Existing V1–V3 source file
 were not edited. A stale V4 file in host compiled output caused an initial test
 classpath conflict; Maven clean removed that build artifact.
 
-No new environment variable is required. `PUBLIC_APP_URL` must be the deployed
+`APP_PUBLIC_BASE_URL` must be the deployed
 frontend's public HTTPS origin for production and phone scanning. In the `dev`
 profile only (without `prod` or `APP_ENV=production`), localhost and loopback HTTP
 origins are allowed for local previews. Production rejects localhost, loopback,
 common private IPv4 origins and HTTP. URLs with a path/query/fragment are rejected.
 The public frontend must use the same backend/database that issues the token.
 The current local setting is still HTTP; the user's exact deployed URL has not
-yet been supplied. The Render setup can continue deriving the HTTPS origin from
-`RENDER_FRONTEND_HOST`. `API_INTERNAL_BASE_URL`, `SITE_URL`, SMTP, JWT, and OTP
-settings retain their existing purposes. No secret values are included here.
+yet been supplied. Set the actual frontend Cloud Run origin on the backend
+before issuing physical stickers. `API_INTERNAL_BASE_URL` is read at runtime;
+Resend, JWT, and OTP secrets remain backend-only. No secret values are included here.
 
 Sticker QR images contain the configured emergency-page URL and an unpredictable
 public token. Existing digital serial formats remain compatible. Physical
@@ -113,8 +113,8 @@ Frontend:
 
 Configuration/documentation:
 
-- `.env.example`, `backend/.env.example`, `frontend/.env.example`
-- `DOCKER_SETUP.md`, `RENDER_DEPLOYMENT.md`
+- Private root, backend, and frontend `.env` files (excluded from Git)
+- `DOCKER_SETUP.md`, `DEPLOYMENT.md`
 - `docs/AUTHENTICATION_FLOW.md`, `docs/DYNAMIC_QR_FLOW.md`
 - `docs/QR_WIZARD_IMPLEMENTATION.md`
 

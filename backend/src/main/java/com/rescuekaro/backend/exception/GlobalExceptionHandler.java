@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -59,6 +60,11 @@ public class GlobalExceptionHandler {
             cause = cause.getCause();
         }
         return error(HttpStatus.CONFLICT, "DATA_CONFLICT", "This record conflicts with existing data.", Map.of());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingRoute(NoResourceFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "The requested endpoint was not found.", Map.of());
     }
 
     @ExceptionHandler(Exception.class)

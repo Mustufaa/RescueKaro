@@ -39,14 +39,14 @@ Set-DefaultEnvironmentValue -Name 'DB_HOST' -Value 'localhost'
 Set-DefaultEnvironmentValue -Name 'DB_PORT' -Value '5432'
 Set-DefaultEnvironmentValue -Name 'DB_NAME' -Value 'rescuekaro_db'
 Set-DefaultEnvironmentValue -Name 'DB_USERNAME' -Value 'postgres'
-Set-DefaultEnvironmentValue -Name 'SERVER_PORT' -Value '8080'
-Set-DefaultEnvironmentValue -Name 'FRONTEND_URL' -Value 'http://localhost:3000'
-Set-DefaultEnvironmentValue -Name 'PUBLIC_APP_URL' -Value 'http://localhost:3000'
+Set-DefaultEnvironmentValue -Name 'PORT' -Value '8080'
+Set-DefaultEnvironmentValue -Name 'CORS_ALLOWED_ORIGINS' -Value 'http://localhost:3000'
+Set-DefaultEnvironmentValue -Name 'APP_PUBLIC_BASE_URL' -Value 'http://localhost:3000'
 
 $serverPort = 0
-if (-not [int]::TryParse($env:SERVER_PORT, [ref] $serverPort) -or
+if (-not [int]::TryParse($env:PORT, [ref] $serverPort) -or
     $serverPort -lt 1 -or $serverPort -gt 65535) {
-    Write-Host "SERVER_PORT must be a number between 1 and 65535 (received '$($env:SERVER_PORT)')." -ForegroundColor Red
+    Write-Host "PORT must be a number between 1 and 65535 (received '$($env:PORT)')." -ForegroundColor Red
     exit 1
 }
 
@@ -84,13 +84,13 @@ if ($portUnavailable) {
     }
 
     Write-Host "Port $serverPort is already in use." -ForegroundColor Red
-    Write-Host "Stop that process, or set SERVER_PORT to another port in backend\.env and run run-dev.cmd again." -ForegroundColor Yellow
+    Write-Host "Stop that process, or set PORT to another port in backend\.env and run run-dev.cmd again." -ForegroundColor Yellow
     exit 1
 }
 
 $processPassword = [Environment]::GetEnvironmentVariable('DB_PASSWORD', 'Process')
 if ([string]::IsNullOrWhiteSpace($processPassword) -or
-    $processPassword -match 'replace-with|your-local|<your') {
+    $processPassword -match 'replace-with|your-local|your_local|<your') {
     $securePassword = Read-Host 'PostgreSQL password for user postgres' -AsSecureString
     $passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
     try {
@@ -113,7 +113,9 @@ $previousPgPassword = [Environment]::GetEnvironmentVariable('PGPASSWORD', 'Proce
 try {
     $psql = Get-Command 'psql.exe' -ErrorAction SilentlyContinue
     $createdb = Get-Command 'createdb.exe' -ErrorAction SilentlyContinue
-    if ($null -ne $psql -and $null -ne $createdb) {
+    # An explicit JDBC URL may point to Supabase or another managed database.
+    # The local database bootstrap must never run against that connection.
+    if ([string]::IsNullOrWhiteSpace($env:DB_URL) -and $null -ne $psql -and $null -ne $createdb) {
         [Environment]::SetEnvironmentVariable(
             'PGPASSWORD',
             [Environment]::GetEnvironmentVariable('DB_PASSWORD', 'Process'),

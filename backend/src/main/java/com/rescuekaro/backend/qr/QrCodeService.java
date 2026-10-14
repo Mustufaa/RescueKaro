@@ -30,7 +30,7 @@ import jakarta.annotation.PostConstruct;
 public class QrCodeService {
     private final JdbcClient db; private final TokenService tokens; private final AppProperties properties;private final Environment environment;
     public QrCodeService(JdbcClient db,TokenService tokens,AppProperties properties,Environment environment){this.db=db;this.tokens=tokens;this.properties=properties;this.environment=environment;}
-    @PostConstruct public void validatePublicUrl(){if((java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod")||"production".equalsIgnoreCase(environment.getProperty("APP_ENV","")))&&!properties.publicAppUrl().startsWith("https://"))throw new IllegalStateException("Production PUBLIC_APP_URL must use HTTPS.");}
+    @PostConstruct public void validatePublicUrl(){if((java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod")||"production".equalsIgnoreCase(environment.getProperty("APP_ENV","")))&&!properties.publicAppUrl().startsWith("https://"))throw new IllegalStateException("Production APP_PUBLIC_BASE_URL must use HTTPS.");}
 
     public List<OwnerQr> list(UUID userId){
         return db.sql("SELECT q.id,q.serial_number,q.sticker_serial,q.status,q.public_token,q.created_at FROM qr_codes q JOIN emergency_profiles p ON p.id=q.emergency_profile_id WHERE p.user_id=:user ORDER BY q.created_at DESC,q.serial_number DESC")
@@ -39,6 +39,11 @@ public class QrCodeService {
 
     @Transactional
     public OwnerQr createDigital(UUID userId) {
+        boolean localDevelopment = environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev"))
+                && !environment.acceptsProfiles(org.springframework.core.env.Profiles.of("prod"))
+                && !"production".equalsIgnoreCase(environment.getProperty("APP_ENV", ""));
+        if (!QrWizardService.generationOriginAllowed(properties.publicAppUrl(), localDevelopment))
+            throw new ApiException(HttpStatus.CONFLICT, "PUBLIC_URL_REQUIRED", "Configure the public emergency site before generating a QR.");
         UUID profileId = db.sql("SELECT id FROM emergency_profiles WHERE user_id=:user AND public_profile_consent_at IS NOT NULL FOR UPDATE")
                 .param("user", userId).query(UUID.class).optional()
                 .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "PROFILE_REQUIRED", "Save and approve your emergency profile first."));

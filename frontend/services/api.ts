@@ -1,29 +1,9 @@
 const BROWSER_API_BASE_URL = "/api/v1";
 
-// Browser requests stay on the frontend origin and use the Next.js API rewrite.
-// Server requests use the configured backend URL; Free Render uses public HTTPS.
-const configuredServerApiBaseUrl =
-  process.env.API_INTERNAL_BASE_URL || "http://localhost:8080/api/v1";
-const trimmedServerApiBaseUrl = (configuredServerApiBaseUrl.includes("://")
-  ? configuredServerApiBaseUrl
-  : /\.onrender\.com(?:\/|$)/i.test(configuredServerApiBaseUrl)
-    ? `https://${configuredServerApiBaseUrl}`
-    : `http://${configuredServerApiBaseUrl}`).replace(/\/+$/, "");
-const SERVER_API_BASE_URL = trimmedServerApiBaseUrl.endsWith("/api/v1")
-  ? trimmedServerApiBaseUrl
-  : `${trimmedServerApiBaseUrl}/api/v1`;
+// All application services call the same-origin runtime route handler.
 
 export const API_BASE_URL = BROWSER_API_BASE_URL;
 
-export const BACKEND_ORIGIN = (() => {
-  try {
-    return typeof window === "undefined"
-      ? new URL(SERVER_API_BASE_URL).origin
-      : window.location.origin;
-  } catch {
-    return "";
-  }
-})();
 let csrfToken = "";
 let sessionRefresh: Promise<unknown> | null = null;
 
@@ -37,7 +17,7 @@ function refreshAt(base: string) {
 }
 
 export function refreshSession() {
-  return refreshAt(typeof window === "undefined" ? SERVER_API_BASE_URL : BROWSER_API_BASE_URL);
+  return refreshAt(BROWSER_API_BASE_URL);
 }
 
 type ApiEnvelope<T> = { data: T; meta?: { requestId?: string } };
@@ -136,17 +116,15 @@ async function request<T>(url: string, init?: RequestInit, retry=true): Promise<
 
 export function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const baseUrl = typeof window === "undefined" ? SERVER_API_BASE_URL : BROWSER_API_BASE_URL;
-  return request<T>(`${baseUrl.replace(/\/$/, "")}${normalizedPath}`, init);
+  return request<T>(`${BROWSER_API_BASE_URL}${normalizedPath}`, init);
 }
 
 export function backendRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const baseUrl = typeof window === "undefined" ? SERVER_API_BASE_URL : BROWSER_API_BASE_URL;
   const apiPath = normalizedPath === "/api/v1"
     ? ""
     : normalizedPath.startsWith("/api/v1/")
       ? normalizedPath.slice("/api/v1".length)
       : normalizedPath;
-  return request<T>(`${baseUrl.replace(/\/$/, "")}${apiPath}`, init);
+  return request<T>(`${BROWSER_API_BASE_URL}${apiPath}`, init);
 }

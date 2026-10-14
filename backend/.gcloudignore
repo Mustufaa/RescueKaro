@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+target
+.idea
+*.log
+*.pem
+*.key
+*.p12
+*.jks
+secrets
+logs
+node_modules

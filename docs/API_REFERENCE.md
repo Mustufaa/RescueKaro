@@ -9,8 +9,7 @@ Implemented in the current slice:
 | GET | `/health` | Public | Application health envelope |
 | POST | `/auth/register` | Public | Accepts name, contact phone, email, password, confirmation, and optional `previousRequestId` when correcting signup email; sends registration email OTP and returns challenge metadata |
 | POST | `/auth/verify-email` | Public | Consumes registration OTP, activates account and sets HttpOnly session cookies |
-| POST | `/auth/login` | Public | Validates email/password, sends login email OTP and returns challenge metadata; no session yet |
-| POST | `/auth/verify-login-otp` | Public | Consumes login OTP and sets HttpOnly session cookies |
+| POST | `/auth/login` | Public | Validates email/password and sets HttpOnly session cookies for verified users; returns `verification` challenge for an existing unverified user |
 | POST | `/auth/resend-otp` | Public | Replaces an active challenge after cooldown |
 | POST | `/auth/password/reset/request` | Public | Sends password reset OTP to a registered email |
 | POST | `/auth/password/reset` | Public | Consumes reset OTP, changes password and revokes refresh sessions |

@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+.next
+node_modules
+out
+*.log
+*.pem
+*.key
+*.p12
+*.jks
+secrets
+logs

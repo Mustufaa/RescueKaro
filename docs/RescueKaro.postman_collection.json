@@ -32,21 +32,12 @@
       }
     },
     {
-      "name": "Login and send email OTP",
+      "name": "Login with email and password",
       "request": {
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": { "mode": "raw", "raw": "{\"email\":\"test@example.com\",\"password\":\"Abc123\"}" },
         "url": "{{baseUrl}}/auth/login"
-      }
-    },
-    {
-      "name": "Verify login email OTP",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\"requestId\":\"{{challengeId}}\",\"code\":\"123456\"}" },
-        "url": "{{baseUrl}}/auth/verify-login-otp"
       }
     },
     {

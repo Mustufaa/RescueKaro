@@ -14,7 +14,7 @@ class QrWizardOriginTest {
     @Test void publicHttpsWorksAndMalformedOrPrivateOriginsAreRejected() {
         assertThat(QrWizardService.generationOriginAllowed("https://rescuekaro.example", false)).isTrue();
         for (String origin : new String[]{"http://rescuekaro.example", "http://localhost:3000/qr", "http://user@localhost:3000",
-                "http://localhost:3000?query=1", "http://localhost:3000#fragment", "https://192.168.1.2", "invalid"}) {
+                "http://localhost:3000?query=1", "http://localhost:3000#fragment", "https://192.168.1.2", "https://not-configured.invalid", "invalid"}) {
             assertThat(QrWizardService.generationOriginAllowed(origin, true)).isFalse();
             assertThat(QrWizardService.generationOriginAllowed(origin, false)).isFalse();
         }

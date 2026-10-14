@@ -9,10 +9,10 @@
    registration can request another code after the resend cooldown.
 2. `POST /auth/verify-email` consumes a valid registration challenge, creates an
    email-verified user and sets HttpOnly access and refresh cookies.
-3. `POST /auth/login` checks email and password, then emails a login code. It
-   does not set authentication cookies. `POST /auth/verify-login-otp` consumes
-   that challenge and creates a session. Legacy users become email-verified at
-   this point.
+3. `POST /auth/login` checks email and password, then sets authentication cookies
+   for a verified account. An existing account with `email_verified=false`
+   receives a registration verification challenge after the correct password;
+   `POST /auth/verify-email` verifies it and creates the session.
 4. `POST /auth/password/reset/request` emails a purpose-specific reset code.
    `POST /auth/password/reset` consumes it, updates the BCrypt password hash,
    and revokes refresh sessions.
@@ -25,4 +25,4 @@ the authenticated subject. Browser API calls use the Next.js same-origin proxy;
 CORS allows only the configured frontend origin.
 
 After signup verification, the frontend opens `/order` at the saved QR wizard.
-After login OTP verification, it opens `/dashboard` regardless of QR state.
+After password login, it opens `/dashboard` regardless of QR state.

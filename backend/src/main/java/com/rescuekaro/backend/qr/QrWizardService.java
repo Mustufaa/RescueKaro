@@ -294,7 +294,7 @@ public class QrWizardService {
                     || uri.getRawQuery() != null || uri.getRawFragment() != null
                     || !(uri.getPath().isEmpty() || "/".equals(uri.getPath()))) return false;
             host = host.toLowerCase(java.util.Locale.ROOT);
-            if (host.equals("localhost") || host.endsWith(".localhost") || host.endsWith(".local")
+            if (host.equals("localhost") || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".invalid")
                     || host.equals("[::1]") || host.equals("::1") || host.equals("0.0.0.0")) return false;
             if (host.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
                 String[] octets = host.split("\\.");

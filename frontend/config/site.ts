@@ -6,9 +6,7 @@ export const siteConfig = {
   replacementPrice: 50,
   supportEmail: "team@rescuekaro.com",
   supportPhone: "+91 94550 05380",
-  address: "Lucknow, Uttar Pradesh, India",
-  url: process.env.SITE_URL || (process.env.RENDER_EXTERNAL_HOSTNAME
-    ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : "http://localhost:3000")
+  address: "Lucknow, Uttar Pradesh, India"
 };
 
 export const navItems = [

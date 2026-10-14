@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -10,9 +11,13 @@ export const viewport: Viewport = {
   themeColor: "#050d1a",
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || (process.env.RENDER_EXTERNAL_HOSTNAME
-    ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : "http://localhost:3000")),
+export async function generateMetadata(): Promise<Metadata> {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");
+  const protocol = requestHeaders.get("x-forwarded-proto") || "https";
+  const origin = process.env.SITE_URL || (host ? `${protocol}://${host}` : "http://localhost:3000");
+  return {
+  metadataBase: new URL(origin),
   title: {
     default: "RescueKaro - Emergency Information, One Scan Away",
     template: "%s | RescueKaro",
@@ -32,7 +37,8 @@ export const metadata: Metadata = {
     title: "RescueKaro",
     description: "Scan Karo. Safe Karo.",
   },
-};
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

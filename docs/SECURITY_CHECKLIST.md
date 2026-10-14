@@ -8,6 +8,6 @@
 - [x] Paise amounts, database constraints, Flyway ownership, `ddl-auto=validate`
 - [ ] Distributed rate limiting and abuse monitoring
 - [ ] Application-layer medical/contact encryption with managed key rotation
-- [ ] Verify password-reset mail delivery with production SMTP credentials
+- [ ] Verify password-reset mail delivery with production Resend credentials
 - [ ] Admin audit UI, backup/restore drill, retention/deletion workflow
 - [ ] Privacy, medical-data, consent, and replacement legal review

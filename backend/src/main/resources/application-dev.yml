@@ -8,11 +8,6 @@ spring:
     restart:
       trigger-file: .reloadtrigger
 
-management:
-  health:
-    mail:
-      enabled: false
-
 logging:
   level:
     com.rescuekaro.backend: INFO

@@ -4,5 +4,10 @@ node_modules
 out
 .env
 .env.*
-!.env.example
 *.log
+*.pem
+*.key
+*.p12
+*.jks
+secrets
+logs

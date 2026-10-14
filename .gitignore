@@ -4,13 +4,17 @@ out/
 target/
 .maven/
 
-# Local environment and secrets (examples remain tracked)
+# Local environment and secrets, including examples
 .env
 .env.*
 **/.env
 **/.env.*
-!.env.example
-!**/.env.example
+*.env
+*.env.*
+.envrc
+*.envrc
+*.dotenv
+*.dotenv.*
 
 # Editors, operating systems, and local Java configuration
 .idea/
@@ -26,3 +30,52 @@ Thumbs.db
 *.log
 *.tsbuildinfo
 .neon
+
+# Deployment, build, test and Python output
+.vercel/
+build/
+dist/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+.nyc_output/
+.coverage
+.coverage.*
+htmlcov/
+test-results/
+playwright-report/
+logs/
+*.log.*
+
+# Credential files and local secrets; ordinary JSON/YAML/certificates stay tracked
+secrets/
+credentials/
+*service-account*.json
+*service_account*.json
+*credentials*.json
+*.secret
+*.secret.*
+*.secrets
+*.secrets.*
+*private*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+
+# Temporary and OS files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+Desktop.ini

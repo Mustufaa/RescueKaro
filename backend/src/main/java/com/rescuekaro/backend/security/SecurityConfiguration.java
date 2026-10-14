@@ -38,7 +38,7 @@ public class SecurityConfiguration {
                 .csrf(config -> config.csrfTokenRepository(csrf)
                         .ignoringRequestMatchers("/api/v1/auth/**"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/health", "/actuator/health", "/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/health", "/actuator/health/**", "/actuator/health", "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/reviews", "/api/v1/public/qr/**", "/api/v1/emergency-directory").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyAuthority("SCOPE_OPERATOR", "SCOPE_ADMIN")

@@ -34,45 +34,45 @@ public class AuthController {
     private final AuthService auth;
     private final AppProperties properties;
     private final org.springframework.core.env.Environment environment;
+    private final ClientIpResolver clientIp;
 
-    public AuthController(AuthService auth, AppProperties properties,org.springframework.core.env.Environment environment) { this.auth = auth; this.properties = properties; this.environment=environment; }
+    public AuthController(AuthService auth, AppProperties properties,org.springframework.core.env.Environment environment,
+            ClientIpResolver clientIp) { this.auth = auth; this.properties = properties; this.environment=environment; this.clientIp=clientIp; }
 
     @PostMapping("/register")
     public ApiResponse<EmailOtpService.Sent> register(@Valid @RequestBody Register request, HttpServletRequest http) {
         if(!request.password().equals(request.confirmPassword())) throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY,"VALIDATION_ERROR","Passwords do not match.");
-        return ApiResponse.of(auth.register(request.fullName(),request.email(),request.phone(),request.password(),http.getRemoteAddr(),request.previousRequestId()));
+        return ApiResponse.of(auth.register(request.fullName(),request.email(),request.phone(),request.password(),clientIp.resolve(http),request.previousRequestId()));
     }
 
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Map<String,Object>>> verifyEmail(@Valid @RequestBody OtpVerify request,HttpServletRequest http) {
-        return session(auth.verifyRegistration(request.requestId(),request.code(),http.getRemoteAddr()),http);
+        return session(auth.verifyRegistration(request.requestId(),request.code(),clientIp.resolve(http)),http);
     }
 
     @PostMapping("/login")
-    public ApiResponse<EmailOtpService.Sent> login(@Valid @RequestBody Login request, HttpServletRequest http) {
-        return ApiResponse.of(auth.login(request.email(), request.password(),http.getRemoteAddr()));
-    }
-
-    @PostMapping("/verify-login-otp")
-    public ResponseEntity<ApiResponse<Map<String,Object>>> verifyLogin(@Valid @RequestBody OtpVerify request,HttpServletRequest http) {
-        return session(auth.verifyLogin(request.requestId(),request.code(),http.getRemoteAddr()),http);
+    public ResponseEntity<ApiResponse<Map<String,Object>>> login(@Valid @RequestBody Login request, HttpServletRequest http) {
+        var result = auth.login(request.email(), request.password(), clientIp.resolve(http));
+        if (result.verification() != null)
+            return ResponseEntity.ok(ApiResponse.of(Map.of("verification", result.verification())));
+        return session(result.session(), http);
     }
 
     @PostMapping("/resend-otp")
     public ApiResponse<EmailOtpService.Sent> resend(@Valid @RequestBody Resend request,HttpServletRequest http) {
-        return ApiResponse.of(auth.resend(request.requestId(),http.getRemoteAddr()));
+        return ApiResponse.of(auth.resend(request.requestId(),clientIp.resolve(http)));
     }
 
     @PostMapping("/password/reset/request")
     public ApiResponse<EmailOtpService.Sent> requestPasswordReset(@Valid @RequestBody ResetRequest request,HttpServletRequest http) {
-        return ApiResponse.of(auth.requestPasswordReset(request.email(),http.getRemoteAddr()));
+        return ApiResponse.of(auth.requestPasswordReset(request.email(),clientIp.resolve(http)));
     }
 
     @PostMapping("/password/reset")
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordReset request,HttpServletRequest http) {
         if (!request.newPassword().equals(request.confirmPassword()))
             throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY,"VALIDATION_ERROR","Passwords do not match.");
-        auth.resetPassword(request.requestId(),request.code(),request.newPassword(),http.getRemoteAddr());
+        auth.resetPassword(request.requestId(),request.code(),request.newPassword(),clientIp.resolve(http));
         return ResponseEntity.noContent().build();
     }
 

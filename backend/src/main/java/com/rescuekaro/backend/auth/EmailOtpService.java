@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +27,13 @@ public class EmailOtpService {
     public record Challenge(UUID id, UUID userId, UUID pendingRegistrationId, String email, Purpose purpose) {}
 
     private final JdbcClient db;
-    private final EmailService emailService;
+    private final ResendEmailService emailService;
     private final AppProperties properties;
     private final Environment environment;
     private final String secret;
     private final SecureRandom random = new SecureRandom();
 
-    public EmailOtpService(JdbcClient db, EmailService emailService, AppProperties properties, Environment environment,
+    public EmailOtpService(JdbcClient db, ResendEmailService emailService, AppProperties properties, Environment environment,
             @Value("${OTP_HASH_SECRET:}") String secret) {
         this.db = db;
         this.emailService = emailService;
@@ -47,7 +46,7 @@ public class EmailOtpService {
     public void validate() {
         boolean prod = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod")
                 || "production".equalsIgnoreCase(environment.getProperty("APP_ENV", ""));
-        if (properties.otp().expirySeconds() < 60 || properties.otp().expirySeconds() > 300
+        if (properties.otp().expirySeconds() != 600
                 || properties.otp().resendSeconds() < 60 || properties.otp().maxAttempts() < 1
                 || properties.otp().maxAttempts() > 5)
             throw new IllegalStateException("OTP expiration, cooldown, and attempt limits are outside the safe range.");
@@ -89,16 +88,12 @@ public class EmailOtpService {
                 : pendingId != null
                 ? db.sql("SELECT full_name FROM pending_registrations WHERE id=:id").param("id", pendingId).query(String.class).optional().orElse("")
                 : "";
-        try {
-            if (purpose != Purpose.PASSWORD_RESET || userId != null) {
-                switch (purpose) {
-                    case REGISTRATION -> emailService.sendRegistrationOtp(address, name, code);
-                    case LOGIN -> emailService.sendLoginOtp(address, name, code);
-                    case PASSWORD_RESET -> emailService.sendPasswordResetOtp(address, name, code);
-                }
+        if (purpose != Purpose.PASSWORD_RESET || userId != null) {
+            switch (purpose) {
+                case REGISTRATION -> emailService.sendRegistrationOtp(address, name, code, id);
+                case LOGIN -> throw new IllegalStateException("Login OTP is disabled.");
+                case PASSWORD_RESET -> emailService.sendPasswordResetOtp(address, name, code, id);
             }
-        } catch (MailException | IllegalStateException failure) {
-            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "EMAIL_DELIVERY_FAILED", "Verification email could not be sent. Please try again later.");
         }
         return new Sent(id, properties.otp().expirySeconds(), properties.otp().resendSeconds(), mask(address));
     }
@@ -140,6 +135,7 @@ public class EmailOtpService {
                         rs.getTimestamp("expires_at").toInstant(), rs.getTimestamp("consumed_at")))
                 .optional().orElseThrow(EmailOtpService::invalid);
         if (row.consumedAt() != null) throw invalid();
+        if (row.purpose() == Purpose.LOGIN) throw invalid();
         if (row.pendingId() != null && !db.sql("SELECT expires_at FROM pending_registrations WHERE id=:id")
                 .param("id", row.pendingId()).query(Instant.class).optional().orElse(Instant.EPOCH).isAfter(Instant.now()))
             throw invalid();

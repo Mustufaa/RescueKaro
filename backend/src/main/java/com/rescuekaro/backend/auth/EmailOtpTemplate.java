@@ -23,7 +23,7 @@ public final class EmailOtpTemplate {
     public static String plain(Action action, String name, String code) {
         return "RescueKaro · Scan karo, safe karo.\n\n" + heading(action) + "\n\nHi " + greeting(name)
                 + ",\n\nYour verification code is: " + code
-                + "\n\nExpires in 5 minutes.\nDo not share this code.\nIf you did not request this, you can ignore this email.\n\nRescueKaro · Scan karo, safe karo.";
+                + "\n\nExpires in 10 minutes.\nDo not share this code.\nIf you did not request this, ignore this email.\n\nRescueKaro · Scan karo, safe karo.";
     }
 
     public static String html(Action action, String name, String code) {
@@ -39,8 +39,8 @@ public final class EmailOtpTemplate {
                 + "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;border-collapse:collapse\"><tr>"
                 + "<td style=\"padding:18px 8px;background:#eef3fa;text-align:center;color:#173f77;font-size:32px;font-weight:700;letter-spacing:6px\">"
                 + escape(code) + "</td></tr></table>"
-                + "<p style=\"font-size:14px;line-height:1.6\">Expires in 5 minutes.<br>Do not share this code.<br>"
-                + "If you did not request this, you can ignore this email.</p></td></tr>"
+                + "<p style=\"font-size:14px;line-height:1.6\">Expires in 10 minutes.<br>Do not share this code.<br>"
+                + "If you did not request this, ignore this email.</p></td></tr>"
                 + "<tr><td style=\"border-top:1px solid #dbe3ee;padding:18px 24px;color:#596779;font-size:13px\">"
                 + "RescueKaro · Scan karo, safe karo.</td></tr></table></body></html>";
     }

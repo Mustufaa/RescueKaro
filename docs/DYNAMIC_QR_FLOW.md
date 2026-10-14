@@ -1,6 +1,6 @@
 # Dynamic QR flow
 
-The digital QR contains a URL such as `{PUBLIC_APP_URL}/qr/{serialCode}/{publicToken}`. The unpredictable token is 32 random bytes encoded URL-safe. The permanent serial comes from the existing PostgreSQL `BIGINT` sequence. Existing one-token URLs still resolve.
+The digital QR contains a URL such as `{APP_PUBLIC_BASE_URL}/qr/{serialCode}/{publicToken}`. The unpredictable token is 32 random bytes encoded URL-safe. The permanent serial comes from the existing PostgreSQL `BIGINT` sequence. Existing one-token URLs still resolve.
 
 After the owner saves and approves an emergency profile, `POST /api/v1/qr-codes` creates or returns its active digital QR. It creates no order or payment. Profile edits preserve the token and immediately affect the same consent-filtered public URL.
 
@@ -20,7 +20,7 @@ Repeated finish calls for the same draft return the same order and stickers.
 Physical stickers use a separate PostgreSQL `BIGINT` sequence starting at 1.
 Their public paths are `/qr/1/{publicToken}`, `/qr/2/{publicToken}`, and so on;
 the random token remains required. Existing digital QR serials and URLs retain
-their legacy format. `PUBLIC_APP_URL` must be a public HTTPS frontend origin
+their legacy format. `APP_PUBLIC_BASE_URL` must be a public HTTPS frontend origin
 for physical issuance. A local `http://localhost` URL is rejected.
 The public frontend must use the same backend/database that issued the token.
 Pointing a local database's QR at a deployed site with a different database
