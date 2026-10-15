@@ -79,3 +79,7 @@ id_ed25519
 *.swo
 *~
 Desktop.ini
+
+# Temporary CI/CD transfer files
+/rescuekaro-aws-cicd.patch
+/rescuekaro-ssh-cicd.zip

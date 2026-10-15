@@ -13,7 +13,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest
+@SpringBootTest(properties = {
+    "OTP_HASH_SECRET=test-only-migration-secret-at-least-32-characters"
+})
 class MigrationIntegrationTest {
     @Container static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
     @DynamicPropertySource static void database(DynamicPropertyRegistry registry) {
