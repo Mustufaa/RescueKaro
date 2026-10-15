@@ -4,10 +4,17 @@ node_modules
 out
 .env
 .env.*
+**/.env
+**/.env.*
+*.env
+*.env.*
 *.log
 *.pem
 *.key
 *.p12
 *.jks
 secrets
+**/secrets
+credentials
+**/credentials
 logs

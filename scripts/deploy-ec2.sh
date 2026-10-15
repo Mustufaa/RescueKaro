@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Executed as ec2-user by AWS Systems Manager, never with bash -x.
+# Executed as ec2-user over SSH, never with bash -x.
 app=/home/ec2-user/rescuekaro
 sha=${1:?Pass the tested commit SHA}
+backend_digest=${2:?Pass the pushed backend digest}
+frontend_digest=${3:?Pass the pushed frontend digest}
 [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo 'Invalid commit SHA' >&2; exit 1; }
+[[ "$backend_digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo 'Invalid backend digest' >&2; exit 1; }
+[[ "$frontend_digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo 'Invalid frontend digest' >&2; exit 1; }
+export BACKEND_IMAGE="ghcr.io/mustufaa/rescuekaro-backend@$backend_digest"
+export FRONTEND_IMAGE="ghcr.io/mustufaa/rescuekaro-frontend@$frontend_digest"
 cd "$app"
 git rev-parse --is-inside-work-tree > /dev/null
 exec 9>"$(git rev-parse --git-path rescuekaro-deploy.lock)"
@@ -34,15 +40,34 @@ fi
 previous_sha=$(git rev-parse HEAD)
 git checkout --detach "$sha"
 
-compose=(sudo -n docker compose --parallel 1 --project-name rescuekaro-supabase
-  --env-file "$app/.env" -f "$app/compose.supabase.yaml")
+compose=(sudo -n env "BACKEND_IMAGE=$BACKEND_IMAGE" "FRONTEND_IMAGE=$FRONTEND_IMAGE"
+  docker compose --parallel 1 --project-name rescuekaro-supabase
+  --env-file "$app/.env" -f "$app/compose.production.yaml")
 "${compose[@]}" config --quiet
-# Builds complete before Compose replaces any running application containers.
-# Build sequentially to reduce pressure on a small EC2 instance.
-"${compose[@]}" build backend
-"${compose[@]}" build frontend
+# Pull both immutable images before replacing either running container.
+"${compose[@]}" pull backend frontend
+
+# Capture the image references of the containers currently serving traffic.
+# The first image-based release may have locally built images without registry digests.
+record=$(git rev-parse --git-path rescuekaro-previous-images)
+{
+  printf 'commit %s\n' "$previous_sha"
+  for service in backend frontend; do
+    container=$("${compose[@]}" ps -q "$service")
+    if [[ -n "$container" ]]; then
+      image_ref=$(sudo -n docker inspect --format '{{.Config.Image}}' "$container")
+      image_id=$(sudo -n docker inspect --format '{{.Image}}' "$container")
+      if [[ "$image_ref" =~ ^ghcr\.io/mustufaa/rescuekaro-(backend|frontend)@sha256:[0-9a-f]{64}$ ]]; then
+        printf '%s %s\n' "$service" "$image_ref"
+      else
+        printf '%s-image-id %s\n' "$service" "$image_id"
+      fi
+    fi
+  done
+} > "$record.tmp"
+mv "$record.tmp" "$record"
 printf '%s\n' "$previous_sha" > "$(git rev-parse --git-path rescuekaro-previous-sha)"
-"${compose[@]}" up -d --no-build --wait --wait-timeout 240
+"${compose[@]}" up -d --no-build --pull never --wait --wait-timeout 240
 
 # Read the configured published port, including a non-default FRONTEND_PORT.
 binding=$("${compose[@]}" port frontend 3000)

@@ -1,117 +1,69 @@
-# GitHub Actions on the existing AWS EC2 host
+# GitHub Actions deployment to EC2
 
-The AWS workflow checks Next.js (build, types, runtime proxy) and Java 21 (Maven verify, including Testcontainers on the runner). Deployment only follows successful checks on main. It uses OIDC and Systems Manager Run Command, not SSH credentials. Supabase and Resend secrets stay in `/home/ec2-user/rescuekaro/.env`.
+The `frontend` and `backend` jobs run on pull requests and main. After both pass on main, the `images` job builds linux/amd64 images on a GitHub runner and pushes full-SHA tags to GHCR. The `deploy` job runs only when `AWS_DEPLOY_ENABLED=true`; it sends the tested SHA and the two pushed image digests to EC2 over host-verified SSH. Production secrets stay in `/home/ec2-user/rescuekaro/.env`.
 
-Deployment is initially disabled. Merging this PR runs CI only. Add the repository variable `AWS_DEPLOY_ENABLED=true` only after completing setup below. No live deployment has been verified as part of this change.
+## One-time GitHub setup
 
-## 1. Prepare EC2 for Systems Manager
+1. Before merging this change, temporarily set repository variable `AWS_DEPLOY_ENABLED=false` while preparing EC2. Restore it to `true` after the checks below. The existing main-only condition and the `production` environment still gate deployment. Restrict the `production` environment to the main branch in **Settings → Environments**.
+2. Keep the existing Actions secrets `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, and `EC2_KNOWN_HOSTS`. `EC2_HOST` must be a DNS name or IP reachable by SSH from a GitHub-hosted runner; `EC2_USER` is `ec2-user` on this Amazon Linux host. The private SSH key must correspond to a public key in that user's `~/.ssh/authorized_keys`. Keep the key and known-hosts data in separate secrets. Populate `EC2_KNOWN_HOSTS` from the instance's actual SSH host public key, verified through a trusted EC2 console/session; do not trust an unverified `ssh-keyscan` result. The workflow requires strict host-key checking.
+3. Ensure the EC2 security group and network permit SSH from the chosen runner egress path. GitHub-hosted runner IPs can change; use a controlled network path or maintain an appropriately restricted allowlist. Avoid opening SSH to the internet solely for this workflow.
+4. In **Packages**, confirm both `rescuekaro-backend` and `rescuekaro-frontend` allow this repository's Actions to write, especially if either package already exists. The workflow grants only its image job `packages: write` and authenticates with the built-in `GITHUB_TOKEN`. Both images carry a source-repository label. Do not change package visibility as part of this rollout. New GHCR packages are private by default; check the actual visibility and access settings after their first push.
+5. Protect main with the existing `frontend` and `backend` checks. Merge only after they pass. Once EC2 preparation is complete, set `AWS_DEPLOY_ENABLED=true` and run the workflow from **Actions → RescueKaro CI and AWS deployment → Run workflow → main**. Future main pushes deploy automatically after both tests and both image pushes succeed.
 
-In EC2, select the existing RescueKaro instance. Note its actual **instance ID**, **AWS account ID**, and **region**. The private hostname is not an instance ID.
+The old `AWS_REGION`, `EC2_INSTANCE_ID`, and `AWS_ROLE_ARN` repository variables and AWS OIDC/SSM permissions are no longer used by this workflow. Remove them later if no other automation uses them.
 
-In IAM, create an EC2 service role with the AWS-managed policy `AmazonSSMManagedInstanceCore`. Attach it through EC2 → Actions → Security → Modify IAM role. If an instance role already exists, add the policy to that role instead of replacing existing permissions.
+## One-time EC2 setup
 
-On EC2:
+1. Confirm `/home/ec2-user/rescuekaro` is a Git checkout of `Mustufaa/RescueKaro`, owned by `ec2-user`, with a clean tracked working tree and the existing root `.env`. Do not copy `.env` into GitHub or into an image build. Confirm passwordless `sudo docker`, Compose with `--wait`/`--wait-timeout`, `flock`, `curl`, and outbound HTTPS to `ghcr.io` and GitHub. No npm, Maven, or Docker build tool is needed on EC2 for deployments.
+2. Keep the current Compose project name `rescuekaro-supabase`. The new `compose.production.yaml` has the same service names, runtime variables, ports, health check and dependency settings as `compose.supabase.yaml`. Its logging limits are 10 MB × 3 files per service. Check that the committed Compose settings still match the live service before enabling deployment.
+3. If the GHCR packages are **private**, create a GitHub personal access token (classic) for a dedicated account that can read both packages, with `read:packages` and any repository access GitHub requires for that account. Authorize SSO if the account's organization requires it. Log Docker in as the same user that runs Docker during deployment (`root` via `sudo`). Type the token at the hidden prompt; the command does not print it or put it in shell history:
 
-```bash
-sudo systemctl status amazon-ssm-agent --no-pager
-sudo systemctl enable --now amazon-ssm-agent
-git -C /home/ec2-user/rescuekaro status --short
-sudo docker compose version
-```
+   ```bash
+   read -r -s -p 'GHCR read token: ' GHCR_READ_TOKEN; printf '\n'
+   printf '%s' "$GHCR_READ_TOKEN" | sudo docker login ghcr.io -u GITHUB_USERNAME --password-stdin
+   unset GHCR_READ_TOKEN
+   ```
 
-If the service is missing, install the official SSM Agent package for the host's OS and architecture first. The instance needs outbound HTTPS access to the regional Systems Manager endpoints and GitHub/build package registries. Confirm it appears **Online** in Systems Manager → Fleet Manager. No inbound SSH rule is needed for this workflow.
+   Replace `GITHUB_USERNAME` with the token owner's login. Check `/root/.docker/config.json` is readable only by root. Docker's default config may store a reversible credential there; use a Docker credential helper if available and rotate the token under your normal credential policy. If packages are public, anonymous pulls are possible and this EC2 login is unnecessary. Never publish private packages just to avoid authentication.
+4. From a trusted admin session, verify repository access, the SSH authorized key, Docker and Compose, and root `.env` presence without printing secrets:
 
-The application directory must be a Git checkout owned by `ec2-user`, with origin pointing to this public repository, a clean tracked working tree, the existing root `.env`, and passwordless `sudo docker` access (as on this host). Reconcile deliberate EC2-only configuration edits into Git before enabling deployments. Do not discard those edits blindly. This workflow uses the committed `compose.supabase.yaml`; confirm it matches live ports and settings. Compose must support `--wait` and `--wait-timeout`.
+   ```bash
+   cd /home/ec2-user/rescuekaro
+   git status --short
+   test -f .env
+   sudo -n docker info >/dev/null
+   sudo -n docker compose up --help | grep -- --wait-timeout
+   ```
 
-## 2. Configure GitHub OIDC in IAM
+The Docker build contexts are `frontend/` and `backend/`, so the root `.env` is outside both. Both `.dockerignore` files exclude local/nested `.env` files, keys and secret directories. The build jobs have no production secrets or build secret inputs.
 
-IAM → Identity providers → Add provider → OpenID Connect:
+## Deployment and recovery
 
-- Provider URL: `https://token.actions.githubusercontent.com`
-- Audience: `sts.amazonaws.com`
+The deploy script holds a host-side `flock`, verifies the requested commit is on main, checks out that commit without resetting local edits, validates production Compose, and pulls **both** digest references before `compose up`. It then waits for Compose health and checks the frontend API health URL. GitHub also serializes production deployment jobs. It never runs `docker build`, npm or Maven on EC2, calls `compose down`, deletes volumes, prunes images, edits `.env`, or automatically reverses database migrations. Flyway startup may apply forward migrations; review backup and app compatibility before a release.
 
-Reuse the provider if it already exists. Create role `RescueKaroGitHubDeploy` with this trust policy, replacing ACCOUNT_ID:
+Immediately before replacing containers, the script writes `.git/rescuekaro-previous-sha` and `.git/rescuekaro-previous-images`. The latter contains the previous commit plus `backend` and `frontend` GHCR digest references. On the first transition from locally built images, it records `backend-image-id` and `frontend-image-id` instead because those images have no registry digest. Keep those local images for a possible manual rollback; the deployment does not prune them.
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Principal": {"Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"},
-    "Action": "sts:AssumeRoleWithWebIdentity",
-    "Condition": {"StringEquals": {
-      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-      "token.actions.githubusercontent.com:sub": "repo:Mustufaa/RescueKaro:environment:production"
-    }}
-  }]
-}
-```
-
-Add this inline permissions policy to that GitHub deployment role, replacing REGION, ACCOUNT_ID, and INSTANCE_ID. This role is separate from the EC2 service role above.
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "ssm:SendCommand",
-      "Resource": [
-        "arn:aws:ec2:REGION:ACCOUNT_ID:instance/INSTANCE_ID",
-        "arn:aws:ssm:REGION::document/AWS-RunShellScript"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ssm:GetCommandInvocation",
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-## 3. Configure GitHub
-
-Repository → Settings → Environments → create **production**. Restrict deployment branches to **main** (selected branches). Set this restriction before enabling deployment because the OIDC trust identifies the environment.
-
-Repository → Settings → Secrets and variables → Actions → **Variables** → New repository variable:
-
-| Name | Value |
-| --- | --- |
-| `AWS_REGION` | Actual EC2 region |
-| `EC2_INSTANCE_ID` | Actual `i-...` instance ID |
-| `AWS_ROLE_ARN` | ARN of `RescueKaroGitHubDeploy` |
-| `AWS_DEPLOY_ENABLED` | Leave absent until ready; set to `true` to deploy |
-
-These identifiers are not credentials. Do not add DB passwords, production `.env`, permanent AWS keys, or an SSH private key to this workflow.
-
-Merge the reviewed workflow, script, and guide into main. Check both CI jobs pass. Then set `AWS_DEPLOY_ENABLED=true`, open Actions → **RescueKaro CI and AWS deployment** → Run workflow → main. On success, subsequent pushes/merges to main deploy automatically. PRs only run CI. Protect main with the `frontend` and `backend` checks to require CI before merging.
-
-## Operational limits and recovery
-
-Docker builds run on the existing EC2 instance, sequentially, after CI. Allow enough free memory and disk for builds alongside running containers; a very small instance can still run out of resources. There is no zero-downtime guarantee: container replacement can briefly interrupt requests. The script does not run `compose down`, delete volumes, prune images, overwrite `.env`, or perform database clean/reset operations. Existing Flyway startup behavior still applies pending migrations to Supabase.
-
-Deployment refuses tracked local edits and checks out the tested commit in detached HEAD mode. It does not force-reset or clean the checkout. It serializes both GitHub deployment jobs and host-side deployment commands. Build or startup failures make the workflow fail. No automatic application or database rollback is performed. Before releases with migrations, ensure there is a recoverable database backup and review compatibility with the previous app version.
-
-Inspect status on EC2 without printing production environment variables:
+To inspect a release without printing environment variables:
 
 ```bash
 cd /home/ec2-user/rescuekaro
-sudo docker compose --env-file .env -f compose.supabase.yaml ps
+cat .git/rescuekaro-previous-images
+sudo docker ps --filter label=com.docker.compose.project=rescuekaro-supabase
 git rev-parse HEAD
-cat .git/rescuekaro-previous-sha
 ```
 
-For failures, inspect the GitHub job and Systems Manager Run Command status. If a runner times out or is cancelled, its remote command may continue: check the command status before retrying. The remote execution timeout is 40 minutes; the runner polls for up to 45 minutes. Review application logs privately because they can contain personal data.
-
-If needed, first set `AWS_DEPLOY_ENABLED=false` and inspect whether the database migration permits an older application. The previous checkout SHA is recorded before replacing containers. After confirming compatibility, manually redeploy that commit using the deployment script (the commit must still be on origin/main):
+For a manual application rollback, first set `AWS_DEPLOY_ENABLED=false`, examine any database migration for backward compatibility, and inspect `.git/rescuekaro-previous-images`. For a previous digest-based release, read the two `ghcr.io/...@sha256:...` references and run the checked-in script from an admin session with the previous SHA and the two **digest portions** (backend first, frontend second):
 
 ```bash
 cd /home/ec2-user/rescuekaro
 previous_sha=$(cat .git/rescuekaro-previous-sha)
-RESCUEKARO_ALLOW_OLDER_RELEASE=true bash scripts/deploy-ec2.sh "$previous_sha"
+backend_ref=$(awk '$1 == "backend" {print $2}' .git/rescuekaro-previous-images)
+frontend_ref=$(awk '$1 == "frontend" {print $2}' .git/rescuekaro-previous-images)
+test -n "$backend_ref" && test -n "$frontend_ref"
+RESCUEKARO_ALLOW_OLDER_RELEASE=true bash scripts/deploy-ec2.sh \
+  "$previous_sha" "${backend_ref##*@}" "${frontend_ref##*@}"
 ```
 
-This rebuilds the older application; it does not undo migrations. For a failure before that record is written, use Git reflog to identify the previous checkout. After recovery, fix/revert main and run CI before enabling automatic deployment again.
+This also overwrites the one-deep previous-image record with the now-current release; save a copy before rollback if you need both records. For the first transition, the previous images are local image IDs and the older commit may lack `compose.production.yaml`; manually restore those existing images with the old Compose file after checking migration compatibility. No database rollback is performed by the script.
 
-References: [GitHub OIDC for AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws), [Systems Manager Run Command](https://docs.aws.amazon.com/systems-manager/latest/userguide/walkthrough-cli.html), [Compose up](https://docs.docker.com/reference/cli/docker/compose/up/).
+References: [GitHub's image publishing guide](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images), [GHCR authentication and visibility](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry), [Compose pull](https://docs.docker.com/reference/cli/docker/compose/pull/).
