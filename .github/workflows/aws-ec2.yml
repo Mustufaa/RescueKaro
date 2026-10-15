@@ -109,21 +109,12 @@ jobs:
     concurrency:
       group: rescuekaro-production
       cancel-in-progress: false
-<<<<<<< HEAD
     permissions:
       contents: read
-=======
-    env:
-      EC2_HOST: ${{ secrets.EC2_HOST }}
-      EC2_USER: ${{ secrets.EC2_USER }}
-      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-      EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
->>>>>>> 83113d33d9e6b61176425d8c29ab8c3ecef681b2
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-<<<<<<< HEAD
       - name: Deploy exact image digests over verified SSH
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -152,34 +143,3 @@ jobs:
             -o ConnectTimeout=15 "${EC2_USER}@${EC2_HOST}" \
             "bash -s -- '$DEPLOY_SHA' '$BACKEND_DIGEST' '$FRONTEND_DIGEST'" \
             < scripts/deploy-ec2.sh
-=======
-      - name: Configure SSH
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$EC2_HOST"
-          test -n "$EC2_USER"
-          test -n "$EC2_SSH_KEY"
-          test -n "$EC2_KNOWN_HOSTS"
-          [[ "$EC2_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
-          [[ "$EC2_USER" =~ ^[a-zA-Z0-9_-]+$ ]]
-          umask 077
-          mkdir -p "$RUNNER_TEMP/rescuekaro-ssh"
-          printf '%s\n' "$EC2_SSH_KEY" > "$RUNNER_TEMP/rescuekaro-ssh/key"
-          printf '%s\n' "$EC2_KNOWN_HOSTS" > "$RUNNER_TEMP/rescuekaro-ssh/known_hosts"
-          ssh-keygen -y -P '' -f "$RUNNER_TEMP/rescuekaro-ssh/key" > /dev/null
-      - name: Deploy tested commit to EC2
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh -T -i "$RUNNER_TEMP/rescuekaro-ssh/key" \
-            -o BatchMode=yes -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            -o UserKnownHostsFile="$RUNNER_TEMP/rescuekaro-ssh/known_hosts" \
-            -o ConnectTimeout=20 -o ServerAliveInterval=30 -o ServerAliveCountMax=6 \
-            "$EC2_USER@$EC2_HOST" "bash -s -- '$GITHUB_SHA'" < scripts/deploy-ec2.sh
-      - name: Remove SSH credentials
-        if: always()
-        shell: bash
-        run: rm -rf -- "$RUNNER_TEMP/rescuekaro-ssh"
->>>>>>> 83113d33d9e6b61176425d8c29ab8c3ecef681b2
